@@ -14,7 +14,7 @@ yarn add api-see
 
 ### 快速开始
 
-以 1.0.0 版本为准
+以 ^1.0.5 版本为准
 
 - `api-see watch`: 监听请求字段类型文件，生成 ui 构建的数据，`server`独立构建文档服务，`mock`开启 mock 服务
 - `api-see build`: 接口文档单独打包
@@ -54,7 +54,6 @@ antmjs.config.js 下配置 openUi
 | mockPort                  | 接口文档开发环境服务端口    | _number_   | 10099                                          |
 | action.requestImport      | 导入请求方法的代码字符串    | _string_   | "import { createFetch } from "@/utils/request" |
 | action.requestFnName      | 请求方法名称                | _string_   | "createFetch"                                  |
-| action.requestSuffix      | 生成业务请求方法的后缀      | _string_   | "Action"                                       |
 | action.createDefaultModel | 自行定义请求方法的结构      | _function_ | `createDefaultModel`                           |
 
 默认的`createDefaultModel`如下

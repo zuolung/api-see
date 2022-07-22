@@ -9,7 +9,7 @@ import getConfig from '../config/getConfig.js'
 
 const CWD = process.cwd()
 const antmConfig = getConfig()
-const { requestImport, requestFnName, requestSuffix } =
+const { requestImport, requestFnName } =
   antmConfig?.apiUi?.action || {}
 
 type Iprops = {
@@ -39,7 +39,6 @@ export default function createAll(props: Iprops) {
             fileName: fileName,
             requestImport,
             requestFnName,
-            requestSuffix,
           })
         } else {
           content = antmConfig?.apiUi?.action?.createDefaultModel(
@@ -67,18 +66,17 @@ export function createDefaultModel({
   requestFnName = 'createFetch',
   fileName = 'a',
   data = {},
-  requestSuffix = 'Action',
 }) {
   const packages = []
   let requestActionsStr = ''
 
   for (const key in data) {
-    if (key !== 'Record<string,any>') {
-      const item = data[key]
+    const item = data[key]
+    if (key !== 'Record<string,any>' && item.url) {
       packages.push(key)
       requestActionsStr += `
       // ${item.description}
-      export const ${key}${requestSuffix} = ${requestFnName}<${key}['request'], ${key}['response']>('${item.url}', '${item.method}');
+      export const ${key}${wordFirstBig(fileName)} = ${requestFnName}<${key}['request'], ${key}['response']>('${item.url}', '${item.method}');
       `
     }
   }
@@ -86,10 +84,15 @@ export function createDefaultModel({
   const packagesStr = packages.join(',')
 
   return `
+  /* eslint-disable import/no-cycle */
   // @ts-nocheck
   ${requestImport}
   import type { ${packagesStr} } from './types/${fileName}';
 
   ${requestActionsStr}
   `
+}
+
+function wordFirstBig (str: string) { 
+  return str.substring(0,1).toLocaleUpperCase() + str.substring(1)
 }
