@@ -1,44 +1,46 @@
-import React, { useLayoutEffect, useCallback, useState, useEffect } from 'react';
-import ReactJson from 'react-json-view';
-import dataU from './data/data.js';
-const data = {};
-Object.keys(dataU).map(key => {
-  data[key] = {};
-
-  for (const kk in dataU[key]) {
-    const item = dataU[key][kk];
-
-    if (item.url && item.description) {
-      data[key][kk] = item;
-    }
-  }
-});
-const apiModuleNames = Object.keys(data);
+import React, { useLayoutEffect, useCallback, useState, useEffect } from "react";
+import ReactJson from "react-json-view";
 export function ApiUi(props) {
-  // eslint-disable-next-line react/prop-types
+  const {
+    apiData
+  } = props;
+  const data = {};
+  Object.keys(apiData).map(key => {
+    data[key] = {};
+
+    for (const kk in apiData[key]) {
+      const item = apiData[key][kk];
+
+      if (item.url && item.description) {
+        data[key][kk] = item;
+      }
+    }
+  });
+  const apiModuleNames = Object.keys(data); // eslint-disable-next-line react/prop-types
+
   const {
     mockPort = 10099
   } = props;
   const [active, setActive] = useState([0, 0]);
   const [urls, setUrls] = useState([]);
   const [api, setApi] = useState();
-  const [hash, setHash] = useState('');
+  const [hash, setHash] = useState("");
 
   const hashChange = () => {
-    const hash_ = window.location.hash.replace('#/', '');
+    const hash_ = window.location.hash.replace("#/", "");
     setHash(hash_);
 
-    if (!hash_.includes('readme')) {
-      const arr = hash_.split('/');
+    if (!hash_.includes("readme")) {
+      const arr = hash_.split("/");
       setActive([Number(arr[0]), Number(arr[1])]);
     }
   };
 
   useLayoutEffect(() => {
     hashChange();
-    window.addEventListener('hashchange', hashChange);
+    window.addEventListener("hashchange", hashChange);
     return () => {
-      window.removeEventListener('hashchange', hashChange);
+      window.removeEventListener("hashchange", hashChange);
     };
   }, []);
   useEffect(() => {
@@ -86,12 +88,12 @@ export function ApiUi(props) {
   }, "@antmjs/open-ui")), /*#__PURE__*/React.createElement("div", {
     className: "goReadme",
     onClick: () => {
-      window.open('/#/readme');
+      window.open("https://www.npmjs.com/package/api-see");
     }
   }, "\u67E5\u770B\u6587\u6863")), /*#__PURE__*/React.createElement("div", {
     className: "mudules-header"
   }, apiModuleNames.map((item, index) => /*#__PURE__*/React.createElement("div", {
-    className: `mudules-item ${active[0] === index ? 'mudules-item-active' : ''}`,
+    className: `mudules-item ${active[0] === index ? "mudules-item-active" : ""}`,
     key: `${index}mudules-header`,
     onClick: () => setActiveHeader(index, 0)
   }, item))), /*#__PURE__*/React.createElement("div", {
@@ -100,7 +102,7 @@ export function ApiUi(props) {
     className: "menu-box"
   }, urls.map((item, index) => /*#__PURE__*/React.createElement("div", {
     onClick: () => setActiveHeader(index, 1),
-    className: `menu-item ${active[1] === index ? 'menu-item-active' : ''}`,
+    className: `menu-item ${active[1] === index ? "menu-item-active" : ""}`,
     key: `${index}apiModuleNames`
   }, /*#__PURE__*/React.createElement("div", {
     className: "menu-name"
@@ -119,7 +121,7 @@ export function ApiUi(props) {
     className: "api-row"
   }, /*#__PURE__*/React.createElement("span", null, "\u8BF7\u6C42\u65B9\u5F0F\uFF1A"), /*#__PURE__*/React.createElement("span", null, api.method)), /*#__PURE__*/React.createElement("div", {
     className: "api-row"
-  }, /*#__PURE__*/React.createElement("span", null, "\u7B80\u4ECB\uFF1A"), /*#__PURE__*/React.createElement("span", null, api.introduce || '--')), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", null, "\u7B80\u4ECB\uFF1A"), /*#__PURE__*/React.createElement("span", null, api.introduce || "--")), /*#__PURE__*/React.createElement("div", {
     className: "api-title l-top"
   }, "\u8BF7\u6C42\u53C2\u6570"), /*#__PURE__*/React.createElement("div", {
     className: "api-tree"
@@ -128,7 +130,7 @@ export function ApiUi(props) {
     indentWidth: 6,
     displayObjectSize: false,
     enableClipboard: false,
-    src: api ? transformData(api.properties.request) : ''
+    src: api ? transformData(api.properties.request) : ""
   })), /*#__PURE__*/React.createElement("div", {
     className: "api-title l-top"
   }, "\u54CD\u5E94\u5185\u5BB9"), /*#__PURE__*/React.createElement("div", {
@@ -138,25 +140,25 @@ export function ApiUi(props) {
     indentWidth: 6,
     displayObjectSize: false,
     enableClipboard: false,
-    src: api ? transformData(api.properties.response) : ''
+    src: api ? transformData(api.properties.response) : ""
   }))))));
 }
 
 function transformData(data, target) {
   if (!data) return;
 
-  if (data.type === 'object') {
+  if (data.type === "object") {
     let result = target || {};
 
     for (const key in data.properties) {
       const item = data.properties[key];
 
-      if (['number', 'string', 'boolean'].includes(item.type)) {
-        result[key] = `${item.type}${data.required && data.required.includes(key) ? '(必填)' : '(非必填)'}${item.description ? `【${item.description}】` : ''}`;
+      if (["number", "string", "boolean"].includes(item.type)) {
+        result[key] = `${item.type}${data.required && data.required.includes(key) ? "(必填)" : "(非必填)"}${item.description ? `【${item.description}】` : ""}`;
       } else {
-        let key__ = `${key} ${data.required && data.required.includes(key) ? '(必填)' : '(非必填)'}${item.description ? `【${item.description}】` : ''}`;
+        let key__ = `${key} ${data.required && data.required.includes(key) ? "(必填)" : "(非必填)"}${item.description ? `【${item.description}】` : ""}`;
 
-        if (item.type === 'array') {
+        if (item.type === "array") {
           result[key__] = [];
         } else {
           result[key__] = {};
@@ -167,8 +169,8 @@ function transformData(data, target) {
     }
 
     return result;
-  } else if (data.type === 'array') {
-    if (data.items.type === 'object') {
+  } else if (data.type === "array") {
+    if (data.items.type === "object") {
       let arr = [{}];
       transformData(data.items, arr[0]);
       return arr;
@@ -184,7 +186,7 @@ function filterNotNull(data) {
   for (const key in data) {
     const item = data[key];
 
-    if (key !== 'Record<string,any>') {
+    if (key !== "Record<string,any>") {
       res[key] = item;
     }
   }

@@ -1,76 +1,80 @@
-import React, { useLayoutEffect, useCallback, useState, useEffect } from 'react'
-import ReactJson from 'react-json-view'
-import dataU from './data/data.js'
-
-const data = {}
-
-Object.keys(dataU).map((key) => {
-  data[key] = {}
-  for (const kk in dataU[key]) {
-    const item = dataU[key][kk]
-    if (item.url && item.description) {
-      data[key][kk] = item
-    }
-  }
-})
-const apiModuleNames = Object.keys(data)
+import React, {
+  useLayoutEffect,
+  useCallback,
+  useState,
+  useEffect,
+} from "react";
+import ReactJson from "react-json-view";
 
 export function ApiUi(props) {
+  const { apiData } = props;
+  const data = {};
+
+  Object.keys(apiData).map((key) => {
+    data[key] = {};
+    for (const kk in apiData[key]) {
+      const item = apiData[key][kk];
+      if (item.url && item.description) {
+        data[key][kk] = item;
+      }
+    }
+  });
+  const apiModuleNames = Object.keys(data);
   // eslint-disable-next-line react/prop-types
-  const { mockPort = 10099 } = props
-  const [active, setActive] = useState([0, 0])
-  const [urls, setUrls] = useState([])
-  const [api, setApi] = useState()
-  const [hash, setHash] = useState('')
+  const { mockPort = 10099 } = props;
+  const [active, setActive] = useState([0, 0]);
+  const [urls, setUrls] = useState([]);
+  const [api, setApi] = useState();
+  const [hash, setHash] = useState("");
 
   const hashChange = () => {
-    const hash_ = window.location.hash.replace('#/', '')
-    setHash(hash_)
-    if (!hash_.includes('readme')) {
-      const arr = hash_.split('/')
-      setActive([Number(arr[0]), Number(arr[1])])
+    const hash_ = window.location.hash.replace("#/", "");
+    setHash(hash_);
+    if (!hash_.includes("readme")) {
+      const arr = hash_.split("/");
+      setActive([Number(arr[0]), Number(arr[1])]);
     }
-  }
+  };
 
   useLayoutEffect(() => {
-    hashChange()
-    window.addEventListener('hashchange', hashChange)
+    hashChange();
+    window.addEventListener("hashchange", hashChange);
     return () => {
-      window.removeEventListener('hashchange', hashChange)
-    }
-  }, [])
+      window.removeEventListener("hashchange", hashChange);
+    };
+  }, []);
 
   useEffect(() => {
-    const apiModuleKey = apiModuleNames[active[0]]
-    const urls_ = []
+    const apiModuleKey = apiModuleNames[active[0]];
+    const urls_ = [];
     if (apiModuleKey) {
-      const moduleData = filterNotNull(data[apiModuleKey])
+      const moduleData = filterNotNull(data[apiModuleKey]);
       Object.keys(moduleData).forEach((key, index) => {
         if (index === active[1]) {
-          setApi(moduleData[key])
+          setApi(moduleData[key]);
         }
         if (moduleData[key].url) {
           urls_.push({
             title: moduleData[key].description,
             url: moduleData[key].url,
-          })
+          });
         }
-      })
-      setUrls(urls_)
+      });
+      setUrls(urls_);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active])
+  }, [active]);
 
   const setActiveHeader = useCallback(
     function (index, target) {
-      active[target] = index
+      active[target] = index;
       if (target === 0) {
-        active[1] = 0
+        active[1] = 0;
       }
-      window.location.hash = `/${active[0]}/${active[1]}`
+      window.location.hash = `/${active[0]}/${active[1]}`;
     },
-    [active],
-  )
+    [active]
+  );
 
   return (
     <div className="api-ui-container">
@@ -85,7 +89,7 @@ export function ApiUi(props) {
         <div
           className="goReadme"
           onClick={() => {
-            window.open('/#/readme')
+            window.open("https://www.npmjs.com/package/api-see");
           }}
         >
           查看文档
@@ -95,7 +99,7 @@ export function ApiUi(props) {
         {apiModuleNames.map((item, index) => (
           <div
             className={`mudules-item ${
-              active[0] === index ? 'mudules-item-active' : ''
+              active[0] === index ? "mudules-item-active" : ""
             }`}
             key={`${index}mudules-header`}
             onClick={() => setActiveHeader(index, 0)}
@@ -110,7 +114,7 @@ export function ApiUi(props) {
             <div
               onClick={() => setActiveHeader(index, 1)}
               className={`menu-item ${
-                active[1] === index ? 'menu-item-active' : ''
+                active[1] === index ? "menu-item-active" : ""
               }`}
               key={`${index}apiModuleNames`}
             >
@@ -143,7 +147,7 @@ export function ApiUi(props) {
 
               <div className="api-row">
                 <span>简介：</span>
-                <span>{api.introduce || '--'}</span>
+                <span>{api.introduce || "--"}</span>
               </div>
 
               <div className="api-title l-top">请求参数</div>
@@ -153,7 +157,7 @@ export function ApiUi(props) {
                   indentWidth={6}
                   displayObjectSize={false}
                   enableClipboard={false}
-                  src={api ? transformData(api.properties.request) : ''}
+                  src={api ? transformData(api.properties.request) : ""}
                 />
               </div>
 
@@ -164,7 +168,7 @@ export function ApiUi(props) {
                   indentWidth={6}
                   displayObjectSize={false}
                   enableClipboard={false}
-                  src={api ? transformData(api.properties.response) : ''}
+                  src={api ? transformData(api.properties.response) : ""}
                 />
               </div>
             </>
@@ -172,52 +176,52 @@ export function ApiUi(props) {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function transformData(data, target) {
-  if (!data) return
-  if (data.type === 'object') {
-    let result = target || {}
+  if (!data) return;
+  if (data.type === "object") {
+    let result = target || {};
     for (const key in data.properties) {
-      const item = data.properties[key]
-      if (['number', 'string', 'boolean'].includes(item.type)) {
+      const item = data.properties[key];
+      if (["number", "string", "boolean"].includes(item.type)) {
         result[key] = `${item.type}${
-          data.required && data.required.includes(key) ? '(必填)' : '(非必填)'
-        }${item.description ? `【${item.description}】` : ''}`
+          data.required && data.required.includes(key) ? "(必填)" : "(非必填)"
+        }${item.description ? `【${item.description}】` : ""}`;
       } else {
         let key__ = `${key} ${
-          data.required && data.required.includes(key) ? '(必填)' : '(非必填)'
-        }${item.description ? `【${item.description}】` : ''}`
-        if (item.type === 'array') {
-          result[key__] = []
+          data.required && data.required.includes(key) ? "(必填)" : "(非必填)"
+        }${item.description ? `【${item.description}】` : ""}`;
+        if (item.type === "array") {
+          result[key__] = [];
         } else {
-          result[key__] = {}
+          result[key__] = {};
         }
-        result[key__] = transformData(item, result[key__])
+        result[key__] = transformData(item, result[key__]);
       }
     }
 
-    return result
-  } else if (data.type === 'array') {
-    if (data.items.type === 'object') {
-      let arr = [{}]
-      transformData(data.items, arr[0])
-      return arr
+    return result;
+  } else if (data.type === "array") {
+    if (data.items.type === "object") {
+      let arr = [{}];
+      transformData(data.items, arr[0]);
+      return arr;
     } else {
-      return [data.items.type]
+      return [data.items.type];
     }
   }
 }
 
 function filterNotNull(data) {
-  const res = {}
+  const res = {};
   for (const key in data) {
-    const item = data[key]
-    if (key !== 'Record<string,any>') {
-      res[key] = item
+    const item = data[key];
+    if (key !== "Record<string,any>") {
+      res[key] = item;
     }
   }
 
-  return res
+  return res;
 }

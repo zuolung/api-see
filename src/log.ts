@@ -1,10 +1,8 @@
-import chalk from 'chalk'
-
-const log = console.log
+import chalk from "chalk";
 
 export default {
-  success: (mess: string) => log(chalk.green(mess)),
-  error: (mess: string) => log(chalk.red(mess)),
-  warning: (mess: string) => log(chalk.yellow(mess)),
-  tips: (mess: string) => log(chalk.blue(mess)),
-}
+  success: (mess: string) => chalk.green(mess),
+  error: (mess: string) => chalk.red(mess),
+  warning: (mess: string) => chalk.yellow(mess),
+  tips: (mess: string) => chalk.gray(mess),
+};

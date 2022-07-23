@@ -1,6 +1,6 @@
 {
   "name": "api-see",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "description": "",
   "main": "./ui/lib.js",
   "typings": "global.d.ts",
@@ -32,12 +32,16 @@
   "dependencies": {
     "@babel/cli": "^7.1.1",
     "@babel/core": "^7.1.1",
+    "@babel/plugin-transform-runtime": "^7.18.9",
     "@babel/preset-env": "^7.18.6",
     "@babel/preset-react": "^7.18.6",
+    "@babel/runtime-corejs3": "^7.18.9",
     "autoprefixer": "^10.4.7",
     "babel-loader": "^8.2.5",
+    "chalk": "^2.4.2",
     "chokidar": "^3.5.3",
     "commander": "^9.3.0",
+    "core-js": "3",
     "css-loader": "^6.7.1",
     "highlight.js": "^11.6.0",
     "html-webpack-plugin": "^5.5.0",
@@ -47,11 +51,10 @@
     "mini-css-extract-plugin": "^2.6.1",
     "mockjs": "^1.1.0",
     "nodemon": "^2.0.17",
+    "ora": "^4.0.1",
     "postcss-loader": "^7.0.0",
     "prettier": "^2.7.1",
     "raw-loader": "^4.0.2",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
     "react-hot-toast": "^2.3.0",
     "react-json-tree": "^0.17.0",
     "react-json-view": "^1.21.0",
@@ -60,6 +63,8 @@
     "webpack-dev-server": "^4.9.3"
   },
   "devDependencies": {
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
     "@types/mockjs": "^1.0.6"
   },
   "peerDependencies": {

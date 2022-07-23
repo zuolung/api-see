@@ -14,7 +14,7 @@ yarn add api-see
 
 ### 快速开始
 
-以 ^1.0.5 版本为准
+以 ^1.1.0 版本为准
 
 - `api-see watch`: 监听请求字段类型文件，生成 ui 构建的数据，`server`独立构建文档服务，`mock`开启 mock 服务
 - `api-see build`: 接口文档单独打包
@@ -37,9 +37,13 @@ yarn add api-see
 
 ```jsx
 import { ApiUi } from "api-see";
+// 默认当前项目生成接口文档数据，.gitignore文件加上 .cache
+import apiData from "@/../.cache/api-ui-data.json";
 import "api-see/ui/app.less";
 
-export default () => <ApiUi />;
+export default function Index(): React.ReactNode {
+  return <ApiUi mockPort={10998} apiData={apiData} />;
+}
 ```
 
 ### 相关配置
