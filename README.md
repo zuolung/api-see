@@ -14,25 +14,25 @@ yarn add api-see
 
 ### 快速开始
 
-以 ^1.1.0 版本为准
+以 ^1.1.1 版本为准
 
-- `api-see watch`: 监听请求字段类型文件，生成 ui 构建的数据，`server`独立构建文档服务，`mock`开启 mock 服务
+- `api-see watch`: 监听请求字段类型文件，生成 ui 构建的数据，`server`独立构建文档服务，`mock`开启 mock 服务, `action`根据请求字段类型生成请求方法
 - `api-see build`: 接口文档单独打包
 - `api-see action`: 根据请求字段类型生成请求方法
 
 ```json
 {
   "scripts": {
-    "api:watch": "api-see watch --path ./src/actions/types --server true --mock true",
+    "api:watch": "api-see watch --path ./src/actions/types --server true --mock true --action true",
     "api:build": "api-see build --path ./src/actions/types",
-    "api:action": "api-see action --path ./src/actions/types"
+    "api:file": "api-see file --path ./src/actions/types"
   }
 }
 ```
 
 ### 将文档 UI 应用到测试环境
 
-开发环境只需要开启 `api-see watch --path ./src/actions/types --mock`
+开发环境只需要开启 `api-see watch --path ./src/actions/types --mock true --action true`
 正式打包则使用 `api-see file`, 再执行本地项目的构建
 
 ```jsx

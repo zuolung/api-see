@@ -1,5 +1,6 @@
 import Webpack, { Stats } from "webpack";
 import getPro from "./webpack.pro.config.js";
+// @ts-ignore
 import * as ora from "ora";
 
 const spinner = ora.default();
