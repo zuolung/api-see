@@ -1,12 +1,11 @@
 /* eslint-disable import/no-named-as-default */
 import path_ from "path";
 import nodemon from "nodemon";
+import * as ora from "ora";
 import runDev from "./config/dev-run.js";
 import log from "./log.js";
 import file from "./file.js";
 import getConfig from "./config/getConfig.js";
-// @ts-ignore
-import * as ora from "ora";
 
 type Iprops = {
   path?: string;
@@ -19,9 +18,14 @@ const antmConfig = getConfig();
 const apiUi = antmConfig.apiUi || {};
 
 export default async function watch(props: Iprops) {
-  const { path = "src/actions/types", mock, server, action } = props;
+  const {
+    path = apiUi["path"] || "src/actions/types",
+    mock,
+    server,
+    action,
+  } = props;
 
-  const spinner = ora.default();
+  const spinner = ora.default(`请求字段ts文件路径：${path}`);
 
   spinner.start(
     log.tips(`开始执行
@@ -29,7 +33,7 @@ export default async function watch(props: Iprops) {
   );
 
   await file({
-    path: apiUi["path"] || path,
+    path:  path,
     watch: true,
     action: !!action,
   });

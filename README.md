@@ -14,7 +14,7 @@ yarn add api-see
 
 ### 快速开始
 
-以 ^1.1.1 版本为准
+以 ^1.1.3 版本为准
 
 - `api-see watch`: 监听请求字段类型文件，生成 ui 构建的数据，`server`独立构建文档服务，`mock`开启 mock 服务, `action`根据请求字段类型生成请求方法
 - `api-see build`: 接口文档单独打包

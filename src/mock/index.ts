@@ -34,7 +34,7 @@ export default function main() {
   }
 
   server.listen(mockPort || 10099, () => {
-    spinner.succeed(log.success("mockServer start success !"));
+    spinner.succeed(log.success(`mockServer start success: http://localhost:${mockPort} !`));
   });
 
   server.on("request", (req, res) => {
@@ -45,8 +45,10 @@ export default function main() {
       "Access-Control-Allow-Methods": "DELETE,PUT,POST,GET,OPTIONS",
     });
 
+    const reqUrl = req.url.split("?")[0];
+
     mockData.forEach((item) => {
-      if (req.url === item.url && item.url) {
+      if (reqUrl === item.url && item.url) {
         const mockResult = transformMock(item.result);
         let mockData = mock(mockResult);
         mockData = prettier.format(JSON.stringify(mockData), {
@@ -57,7 +59,7 @@ export default function main() {
       }
     });
 
-    if (mockData.filter((it) => it.url === req.url).length === 0) {
+    if (mockData.filter((it) => it.url === reqUrl).length === 0) {
       res.end(
         JSON.stringify({
           success: false,
@@ -91,9 +93,9 @@ export default function main() {
                 .replace("#", "@")
                 .replace("'", "")
                 .replace("'", "");
-              result[`${key}`] = value_;
+              result[`${key}`] = value_ || "";
             } else {
-              result[`${key}`] = `${item.value}`
+              result[`${key}`] = `${item.value || ""}`
                 .replace("'", "")
                 .replace("'", "");
             }
@@ -119,7 +121,13 @@ export default function main() {
         transformMock(data["items"], arr[0]);
         return arr;
       } else {
-        return [data["items"].type];
+        let value__;
+        if (data["value"] && Array.isArray(data["value"])) {
+          value__ = data["value"].map((item) => {
+            return item.replace("#", "@");
+          });
+        }
+        return value__ || [data["items"].type];
       }
     }
   }

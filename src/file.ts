@@ -14,11 +14,17 @@ import { createDefaultModel } from "./create-action/create.js";
 const spinner = ora.default();
 const CWD = process.cwd();
 const API_UI_CACHE_PATH = path_.join(CWD, "./.cache/api-ui-cache.json");
+const API_UI_DATA_PATH = path_.join(CWD, "./.cache/api-ui-data.json");
 const antmConfig = getConfig();
 const { requestImport, requestFnName } = antmConfig?.apiUi?.action || {};
 let cacheData = {};
+let result = {};
 if (fs.existsSync(API_UI_CACHE_PATH)) {
   cacheData = require(API_UI_CACHE_PATH);
+}
+
+if (fs.existsSync(API_UI_DATA_PATH)) {
+  result = require(API_UI_DATA_PATH);
 }
 
 export function workFile(targetUrl: string, action: boolean) {
@@ -31,7 +37,7 @@ export function workFile(targetUrl: string, action: boolean) {
         process.exit(1);
       }
 
-      const result = await workUnit(paths, action, writeActionTarget);
+      await workUnit(paths, action, writeActionTarget);
 
       if (!fs.existsSync(path_.join(CWD, "./.cache"))) {
         await fs.mkdirSync(path_.join(CWD, "./.cache"));
@@ -60,6 +66,8 @@ export default async function file(props: Iprops) {
   const targetUrl = path_.join(CWD, path);
   await workFile(targetUrl, action);
   if (watch) {
+    console.info(`开启监听请求字段ts文件`);
+
     watchAction(targetUrl, action, workFile);
   }
 }
@@ -88,8 +96,6 @@ function watchAction(
 }
 
 function workUnit(paths: string[], action: boolean, writeActionTarget: string) {
-  let result = {};
-
   return new Promise(async (resolve) => {
     for (let i = 0; i < paths.length; i++) {
       const p = paths[i];
@@ -136,10 +142,12 @@ function workUnit(paths: string[], action: boolean, writeActionTarget: string) {
           }
         }
 
-        spinner.info(log.success(`解析接口模块: ${p}`));
+        spinner.info(log.tips(`解析接口模块: ${p}`));
         cacheData[p] = curHash;
       }
     }
+
+    spinner.succeed(log.success("所有ts模块解析完成"));
 
     resolve(result);
   });

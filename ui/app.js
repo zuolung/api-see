@@ -15,7 +15,7 @@ function App() {
     );
   }
 
-  return <ApiUi /** API_DATA_USE */ />;
+  return <ApiUi md={true} /** API_DATA_USE */ />;
 }
 
 const dom = document.getElementById("root");

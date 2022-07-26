@@ -84,12 +84,16 @@ export function ApiUi(props) {
             className="logo"
             src="https://antm-js.gitee.io/resource/antmjs-vantui.jpg"
           />
-          <span className="logo-title">@antmjs/open-ui</span>
+          <span className="logo-title">api-see</span>
         </div>
         <div
           className="goReadme"
           onClick={() => {
-            window.open("https://www.npmjs.com/package/api-see");
+            if (props.md) {
+              window.open("#/readme");
+            } else {
+              window.open("https://www.npmjs.com/package/api-see");
+            }
           }}
         >
           查看文档
