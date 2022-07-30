@@ -89,11 +89,7 @@ export function ApiUi(props) {
         <div
           className="goReadme"
           onClick={() => {
-            if (props.md) {
-              window.open("#/readme");
-            } else {
-              window.open("https://www.npmjs.com/package/api-see");
-            }
+            window.open("https://www.npmjs.com/package/api-see");
           }}
         >
           查看文档

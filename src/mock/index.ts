@@ -34,7 +34,11 @@ export default function main() {
   }
 
   server.listen(mockPort || 10099, () => {
-    spinner.succeed(log.success(`mockServer start success: http://localhost:${mockPort} !`));
+    spinner.succeed(
+      log.success(
+        `mockServer start success: http://localhost:${mockPort || 10099} !`
+      )
+    );
   });
 
   server.on("request", (req, res) => {
@@ -81,23 +85,22 @@ export default function main() {
         const item = data["properties"][key];
         if (["number", "string", "boolean"].includes(item.type)) {
           if (item.type === "number") {
+            let value__ = item.value;
+            if (typeof value__ === "string") {
+              value__ = value__.replace("#", "@");
+            }
             result[`${key}${item.rule ? `|${item.rule}` : "|+1"}`] =
-              item.value || 1;
+              value__ || 1;
           }
           if (item.type === "boolean") {
             result[`${key}`] = true;
           }
           if (item.type === "string") {
             if (/^#/.test(item.value)) {
-              const value_ = item.value
-                .replace("#", "@")
-                .replace("'", "")
-                .replace("'", "");
+              const value_ = item.value.replace("#", "@");
               result[`${key}`] = value_ || "";
             } else {
-              result[`${key}`] = `${item.value || ""}`
-                .replace("'", "")
-                .replace("'", "");
+              result[`${key}`] = `${item.value || ""}`;
             }
           }
         } else {
@@ -124,7 +127,10 @@ export default function main() {
         let value__;
         if (data["value"] && Array.isArray(data["value"])) {
           value__ = data["value"].map((item) => {
-            return item.replace("#", "@");
+            if (typeof item === "string") {
+              return item.replace("#", "@");
+            }
+            return item;
           });
         }
         return value__ || [data["items"].type];

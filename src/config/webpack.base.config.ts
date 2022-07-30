@@ -54,10 +54,6 @@ export default async function base() {
           loader: require.resolve("./api-loader.js"),
         },
         {
-          test: /\.md$/,
-          loader: require.resolve("raw-loader"),
-        },
-        {
           test: /\.css$/,
           use: [MiniCssExtractPlugin.loader, require.resolve("css-loader")],
         },

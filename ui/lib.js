@@ -88,11 +88,7 @@ export function ApiUi(props) {
   }, "api-see")), /*#__PURE__*/React.createElement("div", {
     className: "goReadme",
     onClick: () => {
-      if (props.md) {
-        window.open("#/readme");
-      } else {
-        window.open("https://www.npmjs.com/package/api-see");
-      }
+      window.open("https://www.npmjs.com/package/api-see");
     }
   }, "\u67E5\u770B\u6587\u6863")), /*#__PURE__*/React.createElement("div", {
     className: "mudules-header"
