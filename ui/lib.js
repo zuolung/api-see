@@ -2,7 +2,9 @@ import React, { useLayoutEffect, useCallback, useState, useEffect } from "react"
 import ReactJson from "react-json-view";
 export function ApiUi(props) {
   const {
-    apiData
+    apiData,
+    title,
+    mockPort = 10099
   } = props;
   const data = {};
   Object.keys(apiData).map(key => {
@@ -16,11 +18,7 @@ export function ApiUi(props) {
       }
     }
   });
-  const apiModuleNames = Object.keys(data); // eslint-disable-next-line react/prop-types
-
-  const {
-    mockPort = 10099
-  } = props;
+  const apiModuleNames = Object.keys(data);
   const [active, setActive] = useState([0, 0]);
   const [urls, setUrls] = useState([]);
   const [api, setApi] = useState();
@@ -80,12 +78,9 @@ export function ApiUi(props) {
     className: "api-ui-header"
   }, /*#__PURE__*/React.createElement("div", {
     className: "header-l"
-  }, /*#__PURE__*/React.createElement("img", {
-    className: "logo",
-    src: "https://antm-js.gitee.io/resource/antmjs-vantui.jpg"
-  }), /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", {
     className: "logo-title"
-  }, "api-see")), /*#__PURE__*/React.createElement("div", {
+  }, title || `api-see`)), /*#__PURE__*/React.createElement("div", {
     className: "goReadme",
     onClick: () => {
       window.open("https://www.npmjs.com/package/api-see");

@@ -7,7 +7,7 @@ import React, {
 import ReactJson from "react-json-view";
 
 export function ApiUi(props) {
-  const { apiData } = props;
+  const { apiData, title, mockPort = 10099 } = props;
   const data = {};
 
   Object.keys(apiData).map((key) => {
@@ -20,8 +20,6 @@ export function ApiUi(props) {
     }
   });
   const apiModuleNames = Object.keys(data);
-  // eslint-disable-next-line react/prop-types
-  const { mockPort = 10099 } = props;
   const [active, setActive] = useState([0, 0]);
   const [urls, setUrls] = useState([]);
   const [api, setApi] = useState();
@@ -80,11 +78,7 @@ export function ApiUi(props) {
     <div className="api-ui-container">
       <div className="api-ui-header">
         <div className="header-l">
-          <img
-            className="logo"
-            src="https://antm-js.gitee.io/resource/antmjs-vantui.jpg"
-          />
-          <span className="logo-title">api-see</span>
+          <span className="logo-title">{title ||  `api-see`}</span>
         </div>
         <div
           className="goReadme"

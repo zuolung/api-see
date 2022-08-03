@@ -14,11 +14,11 @@ yarn add api-see
 
 ### 快速开始
 
-以 ^1.1.4 版本为准
+以 ^1.1.6 版本为准
 
-- `api-see watch`: 监听请求字段类型文件，生成 ui 构建的数据，`server`独立构建文档服务，`mock`开启 mock 服务, `action`根据请求字段类型生成请求方法
+- `api-see watch`: 监听请求字段类型文件，生成 描述接口文档 的数据，`server`独立构建文档服务，`mock`开启 mock 服务, `action`根据请求字段类型生成请求方法
 - `api-see build`: 接口文档单独打包
-- `api-see action`: 根据请求字段类型生成请求方法
+- `api-see file`: 执行一次生成 描述接口文档 的数据
 
 ```json
 {
@@ -42,7 +42,7 @@ import apiData from "@/../.cache/api-ui-data.json";
 import "api-see/ui/app.less";
 
 export default function Index(): React.ReactNode {
-  return <ApiUi mockPort={10998} apiData={apiData} />;
+  return <ApiUi title="crm接口文档" mockPort={10998} apiData={apiData} />;
 }
 ```
 
