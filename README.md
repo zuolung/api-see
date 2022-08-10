@@ -65,6 +65,7 @@ antmjs.config.js 下配置 openUi
 | buildPort                  | 接口文档开发环境服务端口                                          | _number_   | 7878                                           |
 | mockPort                   | 接口文档开发环境服务端口                                          | _number_   | 10099                                          |
 | action.requestImport       | 导入请求方法的代码字符串                                          | _string_   | "import { createFetch } from "@/utils/request" |
+| action.dirPath             | 请求方法所在文件夹, 相对类型文件的路径                            | _string_   | "../"                                          |
 | action.requestFnName       | 请求方法名称                                                      | _string_   | "createFetch"                                  |
 | action.createDefaultModel  | 自行定义请求方法的结构                                            | _function_ | `createDefaultModel`                           |
 | swagger.url                | swagger 数据地址                                                  | _string_   | --                                             |
