@@ -16,7 +16,8 @@ const CWD = process.cwd();
 const API_UI_CACHE_PATH = path_.join(CWD, "./.cache/api-ui-cache.json");
 const API_UI_DATA_PATH = path_.join(CWD, "./.cache/api-ui-data.json");
 const antmConfig = getConfig();
-const { requestImport, requestFnName } = antmConfig?.apiUi?.action || {};
+const { requestImport, requestFnName, dirPath } =
+  antmConfig?.apiUi?.action || {};
 let cacheData = {};
 let result = {};
 if (fs.existsSync(API_UI_CACHE_PATH)) {
@@ -27,8 +28,15 @@ if (fs.existsSync(API_UI_DATA_PATH)) {
   result = require(API_UI_DATA_PATH);
 }
 
-export function workFile(targetUrl: string, action: boolean) {
-  const writeActionTarget = path_.resolve(targetUrl, "../");
+export function workFile(
+  targetUrl: string,
+  action: boolean,
+  forceUpdate?: boolean
+) {
+  const writeActionTarget = path_.resolve(targetUrl, dirPath || "../");
+  if (!fs.existsSync(writeActionTarget)) {
+    fs.mkdirSync(writeActionTarget);
+  }
 
   return new Promise((resolve) => {
     glob(`${targetUrl}/*.ts`, async (err, paths: string[]) => {
@@ -37,7 +45,7 @@ export function workFile(targetUrl: string, action: boolean) {
         process.exit(1);
       }
 
-      await workUnit(paths, action, writeActionTarget);
+      await workUnit(paths, action, writeActionTarget, forceUpdate);
 
       if (!fs.existsSync(path_.join(CWD, "./.cache"))) {
         await fs.mkdirSync(path_.join(CWD, "./.cache"));
@@ -59,12 +67,13 @@ type Iprops = {
   path?: string;
   watch?: boolean;
   action?: boolean;
+  forceUpdate?: boolean;
 };
 
 export default async function file(props: Iprops) {
   const { path = "src/actions/types", watch = false, action = false } = props;
   const targetUrl = path_.join(CWD, path);
-  await workFile(targetUrl, action);
+  await workFile(targetUrl, action, props.forceUpdate);
   if (watch) {
     console.info(`开启监听请求字段ts文件`);
 
@@ -95,14 +104,19 @@ function watchAction(
   });
 }
 
-function workUnit(paths: string[], action: boolean, writeActionTarget: string) {
+function workUnit(
+  paths: string[],
+  action: boolean,
+  writeActionTarget: string,
+  forceUpdate?: boolean
+) {
   return new Promise(async (resolve) => {
     for (let i = 0; i < paths.length; i++) {
       const p = paths[i];
       const content = await fs.readFileSync(p, "utf-8");
       const curHash = SparkMD5.hash(content);
 
-      if (cacheData[p] === curHash) {
+      if (cacheData[p] === curHash && !forceUpdate) {
         // nothing
       } else {
         const parseRes = parser(p);
@@ -142,12 +156,12 @@ function workUnit(paths: string[], action: boolean, writeActionTarget: string) {
           }
         }
 
-        spinner.info(log.tips(`解析接口模块: ${p}`));
+        spinner.info(log.success(`解析接口模块: ${p}`));
         cacheData[p] = curHash;
       }
     }
 
-    spinner.succeed(log.success("所有ts模块解析完成"));
+    spinner.succeed(log.tips("所有ts模块解析完成"));
 
     resolve(result);
   });

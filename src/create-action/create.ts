@@ -15,11 +15,7 @@ export function createDefaultModel({
       packages.push(key);
       requestActionsStr += `
       // ${item.description}
-      export const ${key}${wordFirstBig(
-        fileName
-      )} = ${requestFnName}<${key}['request'], ${key}['response']>('${
-        item.url
-      }', '${item.method}');
+      export const ${key} = ${requestFnName}<${key}['request'], ${key}['response']>('${item.url}', '${item.method}');
       `;
     }
   }
@@ -34,8 +30,4 @@ export function createDefaultModel({
 
   ${requestActionsStr}
   `;
-}
-
-function wordFirstBig(str: string) {
-  return str.substring(0, 1).toLocaleUpperCase() + str.substring(1);
 }

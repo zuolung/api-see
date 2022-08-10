@@ -4,6 +4,7 @@ import { Command } from "commander";
 import watch from "./watch.js";
 import build from "./build.js";
 import file from "./file.js";
+import swagger from "./swagger/index.js";
 
 const program = new Command();
 
@@ -29,6 +30,14 @@ program
   .description("glob request types")
   .option("-p, --path <path>", "request types path")
   .option("-w, --watch <watch>", "watch files change")
+  .option("-force, --force <forceUpdate>", "update actions widthout cache")
   .action(file);
+
+program
+  .command("swagger")
+  .description("create request types and actions from  swagger data")
+  .option("-p, --path <path>", "request types path")
+  .option("-u, --url <url>", "the url of swagger data")
+  .action(swagger);
 
 program.parse(process.argv);
