@@ -8,7 +8,7 @@ let evalTemp = {
   trailingComma: "all",
 };
 
-export function getPrettierConfig(): Options | {} {
+export function getPrettierConfig(): Promise<Options | Record<string, any>> {
   return new Promise((resolve) => {
     const prettierPath = path.join(process.cwd(), ".prettierrc");
     if (fs.existsSync(prettierPath)) {

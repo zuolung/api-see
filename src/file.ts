@@ -29,8 +29,6 @@ if (fs.existsSync(API_UI_DATA_PATH)) {
   result = require(API_UI_DATA_PATH);
 }
 
-const prettierConfig = getPrettierConfig();
-
 export function workFile(
   targetUrl: string,
   action: boolean,
@@ -144,6 +142,8 @@ function workUnit(
                 def as any
               );
             }
+
+            let prettierConfig = await getPrettierConfig();
 
             const formatContent = prettier.format(content, {
               ...prettierConfig,
