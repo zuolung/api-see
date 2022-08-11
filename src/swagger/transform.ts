@@ -7,7 +7,7 @@ import * as ora from "ora";
 
 const typeNameCache = [];
 let prettierConfig = {};
-const DEAULT_REPONSE = `{
+const DEAULT_RESPONSE = `{
   /**
    * @value 200
    */
@@ -94,7 +94,7 @@ export async function transform(
           }
         });
       } else {
-        resCodes = DEAULT_REPONSE;
+        resCodes = DEAULT_RESPONSE;
       }
 
       const typeName = getRequestTypeName(key);
@@ -107,7 +107,7 @@ export async function transform(
      */
     export type I${typeName} = {
       request: ${reqCodes}
-      reponse: ${resCodes}
+      response: ${resCodes}
     }
     `;
     }
