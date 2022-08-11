@@ -7,6 +7,16 @@ import * as ora from "ora";
 
 const typeNameCache = [];
 let prettierConfig = {};
+const DEAULT_REPONSE = `{
+  /**
+   * @value 200
+   */
+  code: number
+  /**
+   * @value success
+   */
+  success: boolean
+}`;
 
 export async function transform(
   data: Record<string, any>,
@@ -21,7 +31,7 @@ export async function transform(
   const paths = data["paths"];
 
   let baseTypes = "";
-  prettierConfig = getPrettierConfig();
+  prettierConfig = await getPrettierConfig();
   if (!fs.existsSync(typesUrl)) {
     fs.mkdirSync(typesUrl);
   }
@@ -76,7 +86,7 @@ export async function transform(
       if (item.responses["200"]?.schema) {
         const schema = item.responses["200"];
         const resParseResult = parseDef(schema);
-        resCodes += getDefaultResponse(resParseResult.codes);
+        resCodes += resParseResult.codes;
 
         resParseResult.dependencies.map((dep) => {
           if (!result[moduleName].dependencies.includes(dep)) {
@@ -84,7 +94,7 @@ export async function transform(
           }
         });
       } else {
-        resCodes += getDefaultResponse();
+        resCodes = DEAULT_REPONSE;
       }
 
       const typeName = getRequestTypeName(key);
@@ -244,23 +254,6 @@ function parseDef(def: Record<string, any>, kk?: string) {
     codes: result,
     dependencies: dependencies,
   };
-}
-
-function getDefaultResponse(dataStr?: string) {
-  const addtionalStr = dataStr ? `data:${dataStr}` : "";
-  const DEAULT_REPONSE = `{
-    /**
-     * @value 200
-     */
-    code: number
-    /**
-     * @value success
-     */
-    success: boolean
-    ${addtionalStr}
-  }`;
-
-  return DEAULT_REPONSE;
 }
 
 function isBaseType(d?: string) {
