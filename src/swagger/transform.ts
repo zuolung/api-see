@@ -36,7 +36,7 @@ export async function transform(
     const parseResult = parseDef(def);
     baseTypes += `
     /**
-     * ${def.description}
+     * ${def.description || "--"}
      */
     export type ${formatBaseTypeKey(key)} = ${parseResult.codes}`;
   }

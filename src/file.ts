@@ -10,6 +10,7 @@ import SparkMD5 from "spark-md5";
 import log from "./log.js";
 import getConfig from "./config/getConfig.js";
 import { createDefaultModel } from "./create-action/create.js";
+import { getPrettierConfig } from "./config/getPrettierConfig.js";
 
 const spinner = ora.default();
 const CWD = process.cwd();
@@ -27,6 +28,8 @@ if (fs.existsSync(API_UI_CACHE_PATH)) {
 if (fs.existsSync(API_UI_DATA_PATH)) {
   result = require(API_UI_DATA_PATH);
 }
+
+const prettierConfig = getPrettierConfig();
 
 export function workFile(
   targetUrl: string,
@@ -143,9 +146,7 @@ function workUnit(
             }
 
             const formatContent = prettier.format(content, {
-              semi: false,
-              singleQuote: true,
-              trailingComma: "all",
+              ...prettierConfig,
               parser: "typescript",
             });
 
@@ -156,7 +157,7 @@ function workUnit(
           }
         }
 
-        spinner.info(log.success(`解析接口模块: ${p}`));
+        spinner.info(log.tips(`解析接口模块: ${p}`));
         cacheData[p] = curHash;
       }
     }

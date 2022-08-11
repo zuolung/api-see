@@ -2,7 +2,11 @@ import path from "path";
 import fs from "fs";
 import type { Options } from "prettier";
 
-let evalTemp = {};
+let evalTemp = {
+  semi: false,
+  singleQuote: true,
+  trailingComma: "all",
+};
 
 export function getPrettierConfig(): Options | {} {
   return new Promise((resolve) => {
