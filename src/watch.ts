@@ -14,8 +14,8 @@ type Iprops = {
   action?: boolean;
 };
 
-const antmConfig = getConfig();
-const apiUi = antmConfig.apiUi || {};
+const apiConfig = getConfig();
+const apiUi = apiConfig || {};
 
 export default async function watch(props: Iprops) {
   const {
@@ -33,7 +33,7 @@ export default async function watch(props: Iprops) {
   );
 
   await file({
-    path:  path,
+    path: path,
     watch: true,
     action: !!action,
   });
@@ -41,7 +41,10 @@ export default async function watch(props: Iprops) {
   if (!!mock) {
     nodemon({
       script: path_.join(__dirname, "./mock/index.js"),
-      watch: [path_.join(process.cwd(), "./.cache/api-ui-data.json")],
+      watch: [
+        path_.join(process.cwd(), "./.cache/api-ui-data.json"),
+        path_.join(process.cwd(), "./api.config.js"),
+      ],
     })
       .on("quit", () => {
         log.error("mock api quit");

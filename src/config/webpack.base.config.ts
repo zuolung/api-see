@@ -4,8 +4,8 @@ import MiniCssExtractPlugin from "mini-css-extract-plugin";
 import autoprefixer from "autoprefixer";
 import getConfig from "./getConfig.js";
 
-const antmConfig = getConfig();
-const { buildPath } = antmConfig.apiUi || {};
+const apiConfig = getConfig();
+const { buildPath } = apiConfig || {};
 const cwd = process.cwd();
 
 export default async function base() {

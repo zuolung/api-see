@@ -13,11 +13,11 @@ type Iprops = {
 export default async function swagger(props: Iprops) {
   const { path = "src/actions/types" } = props;
   const config = getConfig();
-  const url = props.url || config.apiUi?.swagger?.url;
-  const path_ = path || config.apiUi?.path;
-  const modules = config.apiUi?.swagger?.modules;
+  const url = props.url || config?.swagger?.url;
+  const path_ = path || config?.path;
+  const modules = config?.swagger?.modules;
   const createTypeFileName_ =
-    config.apiUi?.swagger?.createTypeFileName || createTypeFileName;
+    config?.swagger?.createTypeFileName || createTypeFileName;
   if (!url) {
     log.error("can not get swagger url");
     return;
@@ -32,11 +32,11 @@ export default async function swagger(props: Iprops) {
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 swagger data                                                    +
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-🚀 swagger版本: ${swaggerData["swagger"]}                        
-🚴‍♀️ 接口模块数: ${swaggerData["tags"].length}                      
-🚗 接口数: ${Object.keys(swaggerData["paths"]).length}           
-🚄 公共类型数: ${Object.keys(swaggerData["definitions"]).length}  
-🐘 执行模块: ${modules ? modules.join(`, `) : "所有模块"}          
++ 🚀 swagger版本: ${swaggerData["swagger"]}                        
++ 🚴‍♀️ 接口模块数: ${swaggerData["tags"].length}                      
++ 🚗 接口数: ${Object.keys(swaggerData["paths"]).length}           
++ 🚄 公共类型数: ${Object.keys(swaggerData["definitions"]).length}  
++ 🐘 执行模块: ${modules ? modules.join(`, `) : "所有模块"}          
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 `)
   );

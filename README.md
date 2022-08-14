@@ -5,11 +5,7 @@
 - 无需自行书写请求代码，把 HTTP 接口当做函数调用
 - 代码自动化转化为接口文档，代码和文档完全保持一致
 - 本地生成 mock 服务，提升联调效率
-
-开发方式：
-
-1. 支持前端 ts 定义接口
-2. 后端定义接口 swagger
+- 根据后端 swagger 文档生成接口请求字段类型、请求方法，然后简易 mock 服务
 
 ### 安装
 
@@ -19,7 +15,7 @@ yarn add api-see
 
 ### 快速开始
 
-以 ^1.2.2 版本为准
+以 ^1.3.0 版本为准
 
 - `api-see watch`: 监听请求字段类型文件，生成 描述接口文档 的数据，`server`独立构建文档服务，`mock`开启 mock 服务, `action`根据请求字段类型生成请求方法
 - `api-see build`: 接口文档单独打包
@@ -54,23 +50,82 @@ export default function Index(): React.ReactNode {
 }
 ```
 
-### 相关配置
+### 基本配置
 
-antmjs.config.js 下配置 openUi
+配置文件根目录下 api.config.js 文件
 
-| 字段                       | 描述                                                              | 类型       | 默认值                                         |
-| -------------------------- | ----------------------------------------------------------------- | ---------- | ---------------------------------------------- |
-| path                       | 请求字段类型所在的文件路径`                                       | _string_   | "./src/actions/types"                          |
-| buildPath                  | 接口文档打包路径                                                  | _string_   | "./api-ui"                                     |
-| buildPort                  | 接口文档开发环境服务端口                                          | _number_   | 7878                                           |
-| mockPort                   | 接口文档开发环境服务端口                                          | _number_   | 10099                                          |
-| action.requestImport       | 导入请求方法的代码字符串                                          | _string_   | "import { createFetch } from "@/utils/request" |
-| action.dirPath             | 请求方法所在文件夹, 相对类型文件的路径                            | _string_   | "../"                                          |
-| action.requestFnName       | 请求方法名称                                                      | _string_   | "createFetch"                                  |
-| action.createDefaultModel  | 自行定义请求方法的结构                                            | _function_ | `createDefaultModel`                           |
-| swagger.url                | swagger 数据地址                                                  | _string_   | --                                             |
-| swagger.modules            | 使用的的接口模块，对应`swagger.tags.name`, 不传则使用所有         | _string_   | --                                             |
-| swagger.createTypeFileName | ts 类型文件名称，不需要后缀，返回空则默认使用 `swagger.tags.name` | _function_ | `createTypeFileName`                           |
+| 字段      | 描述                        | 类型     | 默认值                |
+| --------- | --------------------------- | -------- | --------------------- |
+| path      | 请求字段类型所在的文件路径` | _string_ | "./src/actions/types" |
+| buildPath | 接口文档打包路径            | _string_ | "./api-ui"            |
+| buildPort | 接口文档开发环境服务端口    | _number_ | 7878                  |
+
+### mock 服务配置
+
+api.config.js 文件下的 mock 属性
+
+| 字段 | 描述          | 类型     | 默认值 |
+| ---- | ------------- | -------- | ------ |
+| port | mock 服务端口 | _number_ | 10099  |
+
+拦截基本类型数据`mock.baseIntercept`配置案例,
+[按照 mockjs 返回](http://mockjs.com/examples.html#String)
+
+```js
+function baseIntercept(params) {
+  // type：string、number、boolean
+  // fieldName：字段名称
+  // originValue：原有值，swagger枚举类型、formatDate等或手动写的@value注释
+  // url：请求路径
+  const { type, fieldName, originValue, url } = params;
+  if (originValue) return originValue;
+
+  if (type === "string") {
+    if (fieldName.includes("name") || fieldName.includes("Name"))
+      return "@cname";
+    if (fieldName.includes("code") || fieldName.includes("Code"))
+      return "@word(4, 6)";
+    if (
+      fieldName.includes("intro") ||
+      fieldName.includes("Intro") ||
+      fieldName.includes("Long")
+    ) {
+      return "@cparagraph(1, 3)";
+    }
+    return "@ctitle";
+  } else if (type === "number") {
+    if (fieldName.includes("Id") || fieldName.includes("id")) {
+      return "@integer(99, 100000)";
+    }
+
+    return 1;
+  } else if (type === "boolean") {
+    if (fieldName === "success") return true;
+    return Math.random() > 0.5 ? true : false;
+  }
+}
+```
+
+拦截数组类型数据`mock.arrayRule`配置案例
+
+```js
+function arrayRule(params) {
+  const { type, fieldName, url } = params;
+  // 随机19-20条数组
+  if (fieldName === "list") return "19-20";
+}
+```
+
+### action 配置
+
+api.config.js 文件下的 action 属性
+
+| 字段               | 描述                 | 类型       | 默认值                                         |
+| ------------------ | -------------------- | ---------- | ---------------------------------------------- |
+| requestImport      | 请求方法的代码字符串 | _string_   | "import { createFetch } from "@/utils/request" |
+| dirPath            | 相对类型文件的路径   | _string_   | "../"                                          |
+| requestFnName      | 请求方法名称         | _string_   | "createFetch"                                  |
+| createDefaultModel | 定义请求方法的结构   | _function_ | `createDefaultModel`                           |
 
 默认的`createTypeFileName`如下
 
@@ -91,6 +146,16 @@ export function createTypeFileName(url) {
   }
 }
 ```
+
+### swagger 配置
+
+api.config.js 文件下的 swagger 属性, swagger 转换后，对应 formatDate 和枚举类型的数据会转换成 mock 数组
+
+| 字段               | 描述                                                              | 类型       | 默认值               |
+| ------------------ | ----------------------------------------------------------------- | ---------- | -------------------- |
+| url                | swagger 数据地址                                                  | _string_   | --                   |
+| modules            | 使用的的接口模块，对应`swagger.tags.name`, 不传则使用所有         | _string_   | --                   |
+| createTypeFileName | ts 类型文件名称，不需要后缀，返回空则默认使用 `swagger.tags.name` | _function_ | `createTypeFileName` |
 
 默认的`createDefaultModel`如下
 

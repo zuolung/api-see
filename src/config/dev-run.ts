@@ -5,8 +5,9 @@ import Server from "webpack-dev-server";
 import getBase from "./webpack.base.config.js";
 import getConfig from "./getConfig.js";
 
-const antmConfig = getConfig();
-const { buildPort } = antmConfig.apiUi || {};
+const apiConfig = getConfig();
+const { buildPort } = apiConfig || {};
+const { port } = apiConfig?.mock || {};
 
 const devServer = {
   port: buildPort || 7878,
@@ -18,7 +19,7 @@ const devServer = {
   },
   proxy: {
     "/mock": {
-      target: "http://localhost:10099",
+      target: `http://localhost:${port}`,
       changeOrigin: true,
       pathRewrite: {
         "^/mock": "/",

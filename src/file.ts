@@ -16,9 +16,8 @@ const spinner = ora.default();
 const CWD = process.cwd();
 const API_UI_CACHE_PATH = path_.join(CWD, "./.cache/api-ui-cache.json");
 const API_UI_DATA_PATH = path_.join(CWD, "./.cache/api-ui-data.json");
-const antmConfig = getConfig();
-const { requestImport, requestFnName, dirPath } =
-  antmConfig?.apiUi?.action || {};
+const apiConfig = getConfig();
+const { requestImport, requestFnName, dirPath } = apiConfig?.action || {};
 let cacheData = {};
 let result = {};
 if (fs.existsSync(API_UI_CACHE_PATH)) {
@@ -129,7 +128,7 @@ function workUnit(
           if (action) {
             let content = "";
 
-            if (!antmConfig?.apiUi?.action?.createDefaultModel) {
+            if (!apiConfig?.action?.createDefaultModel) {
               content = createDefaultModel({
                 data: def,
                 fileName: fileName,
@@ -137,7 +136,7 @@ function workUnit(
                 requestFnName,
               });
             } else {
-              content = antmConfig?.apiUi?.action?.createDefaultModel(
+              content = apiConfig?.action?.createDefaultModel(
                 fileName,
                 def as any
               );
@@ -162,7 +161,7 @@ function workUnit(
       }
     }
 
-    spinner.succeed(log.tips("所有ts模块解析完成"));
+    spinner.succeed(log.success("所有ts模块解析完成"));
 
     resolve(result);
   });

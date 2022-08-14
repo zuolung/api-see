@@ -126,7 +126,7 @@ export async function transform(
   }
 
   console.info(
-    log.tips(`
+    log.success(`
     👊 swagger数据解析完成
   `)
   );
@@ -153,9 +153,6 @@ function parseDef(def: Record<string, any>, kk?: string) {
           if (data.format === "date-time") {
             $value = `#datetime()`;
           }
-        } else if (type__ === "number") {
-          if (data.format)
-            $value = `#integer(${data.format.replace("int", "")})`;
         }
         const comments = `
         /**

@@ -5,11 +5,10 @@ import { mock } from "mockjs";
 import log from "../log.js";
 import getConfig from "../config/getConfig.js";
 import path from "path";
-// @ts-ignore
 import * as ora from "ora";
 
-const antmConfig = getConfig();
-const { mockPort } = antmConfig.apiUi || {};
+const apiConfig = getConfig();
+const { port, baseIntercept, arrayRule } = apiConfig?.mock || {};
 const data = require(path.join(process.cwd(), "./.cache/api-ui-data.json"));
 
 main();
@@ -33,10 +32,10 @@ export default function main() {
     }
   }
 
-  server.listen(mockPort || 10099, () => {
+  server.listen(port || 10099, () => {
     spinner.succeed(
       log.success(
-        `mockServer start success: http://localhost:${mockPort || 10099} !`
+        `mockServer start success: http://localhost:${port || 10099} !`
       )
     );
   });
@@ -53,7 +52,7 @@ export default function main() {
 
     mockData.forEach((item) => {
       if (reqUrl === item.url && item.url) {
-        const mockResult = transformMock(item.result);
+        const mockResult = transformMock(item.result, null, item.url);
         let mockData = mock(mockResult);
         mockData = prettier.format(JSON.stringify(mockData), {
           semi: false,
@@ -76,7 +75,8 @@ export default function main() {
 
   function transformMock(
     data: Record<string, any>,
-    target?: Record<string, any>
+    target?: Record<string, any>,
+    url?: string
   ): any {
     if (!data) return;
     if (data["type"] === "object") {
@@ -86,34 +86,95 @@ export default function main() {
         if (["number", "string", "boolean"].includes(item.type)) {
           if (item.type === "number") {
             let value__ = item.value;
+            if (baseIntercept) {
+              value__ =
+                baseIntercept({
+                  url: url,
+                  fieldName: key,
+                  type: "number",
+                  originValue: value__,
+                }) || item.value;
+            }
             if (typeof value__ === "string") {
               value__ = value__.replace("#", "@");
             }
+
+            if (Array.isArray(value__)) {
+              value__ = randomEnum(value__);
+            }
+
             result[`${key}${item.rule ? `|${item.rule}` : "|+1"}`] =
               value__ || 1;
           }
           if (item.type === "boolean") {
-            result[`${key}`] = true;
+            let value__: any = item.value || true;
+            if (baseIntercept) {
+              value__ =
+                baseIntercept({
+                  url: url,
+                  fieldName: key,
+                  type: "boolean",
+                  originValue: value__,
+                }) || value__;
+            }
+            result[`${key}`] = value__;
           }
           if (item.type === "string") {
             if (/^#/.test(item.value)) {
-              const value_ = item.value.replace("#", "@");
-              result[`${key}`] = value_ || "";
+              let value__: any = item.value.replace("#", "@");
+
+              if (baseIntercept) {
+                value__ =
+                  baseIntercept({
+                    url: url,
+                    fieldName: key,
+                    type: "string",
+                    originValue: value__,
+                  }) || value__;
+              }
+
+              if (Array.isArray(value__)) {
+                value__ = randomEnum(value__);
+              }
+
+              result[`${key}`] = value__ || "";
             } else {
-              result[`${key}`] = `${item.value || ""}`;
+              let value__: any = item.value;
+
+              if (baseIntercept) {
+                value__ =
+                  baseIntercept({
+                    url: url,
+                    fieldName: key,
+                    type: "string",
+                    originValue: value__,
+                  }) || value__;
+              }
+
+              if (Array.isArray(value__)) {
+                value__ = randomEnum(value__);
+              }
+              result[`${key}`] = `${value__ || ""}`;
             }
           }
         } else {
           let key_ = key;
+          let rule__ = item.rule;
           if (item.type === "array") {
-            key_ = item.rule
-              ? `${key}${item.rule ? `|${item.rule}` : ""}`
-              : key;
+            if (arrayRule) {
+              rule__ =
+                arrayRule({
+                  url,
+                  fieldName: key,
+                  originRule: item.rule,
+                }) || rule__;
+            }
+            key_ = rule__ ? `${key}${rule__ ? `|${rule__}` : ""}` : key;
             result[key_] = [];
           } else {
             result[key] = {};
           }
-          result[key_] = transformMock(item, result[key_]);
+          result[key_] = transformMock(item, result[key_], url);
         }
       }
 
@@ -121,7 +182,7 @@ export default function main() {
     } else if (data["type"] === "array") {
       if (data["items"].type === "object") {
         const arr = [{}];
-        transformMock(data["items"], arr[0]);
+        transformMock(data["items"], arr[0], url);
         return arr;
       } else {
         let value__;
@@ -137,4 +198,10 @@ export default function main() {
       }
     }
   }
+}
+
+function randomEnum(arr) {
+  const ran = Math.floor(Math.random() * (arr.length - 0));
+
+  return arr[ran];
 }
