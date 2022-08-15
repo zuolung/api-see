@@ -35,7 +35,7 @@ export function ApiUi(props) {
   };
 
   useLayoutEffect(() => {
-    document.title = title;
+    if (title) document.title = title;
     hashChange();
     window.addEventListener("hashchange", hashChange);
     return () => {
