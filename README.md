@@ -149,7 +149,7 @@ export function createTypeFileName(url) {
 
 ### swagger 配置
 
-api.config.js 文件下的 swagger 属性, swagger 转换后，对应 formatDate 和枚举类型的数据会转换成 mock 数组
+api.config.js 文件下的 swagger 属性, swagger 转换后，对应 formatDate 和枚举类型的数据会转换成 mock 数据
 
 | 字段               | 描述                                                              | 类型       | 默认值               |
 | ------------------ | ----------------------------------------------------------------- | ---------- | -------------------- |

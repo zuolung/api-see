@@ -35,6 +35,7 @@ export function ApiUi(props) {
   };
 
   useLayoutEffect(() => {
+    document.title = title;
     hashChange();
     window.addEventListener("hashchange", hashChange);
     return () => {
@@ -78,7 +79,7 @@ export function ApiUi(props) {
     <div className="api-ui-container">
       <div className="api-ui-header">
         <div className="header-l">
-          <span className="logo-title">{title ||  `api-see`}</span>
+          <span className="logo-title">{title || `api-see`}</span>
         </div>
         <div
           className="goReadme"
