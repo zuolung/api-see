@@ -21,7 +21,7 @@ yarn add api-see
 - `api-see build`: 接口文档单独打包
 - `api-see file`: 执行一次生成 描述接口文档 的数据
 - `api-see file --force true`: 不使用缓存
-- `api-see swagger`: 根据 swagger 数据生成 本地 请求字段类型 ts 文件、请求方法 ts 文件、简易 mock 服务（后续版本：添加拦截修改）
+- `api-see swagger`: 根据 swagger 数据生成 本地 请求字段类型 ts 文件、请求方法 ts 文件
 
 ```json
 {
@@ -62,14 +62,18 @@ export default function Index(): React.ReactNode {
 
 ### mock 服务配置
 
-api.config.js 文件下的 mock 属性
+api.config.js 文件下的 mock 属性, 前端定义接口通过`定义请求字段`的注释来 mock 数据或者拦截 mock 服务的方式，
+基于后端 swagger 只能通过拦截 mock 服务的方式，mock 服务会返回根据 swagger 的枚举数据和 formatDate 等数据类型生成的默认的 mock 数据
 
-| 字段 | 描述          | 类型     | 默认值 |
-| ---- | ------------- | -------- | ------ |
-| port | mock 服务端口 | _number_ | 10099  |
+| 字段          | 描述             | 类型       | 默认值 |
+| ------------- | ---------------- | ---------- | ------ |
+| port          | mock 服务端口    | _number_   | 10099  |
+| baseIntercept | 拦截基本类型数据 | _function_ | --     |
+| arrayRule     | 拦截数组类型数据 | _function_ | --     |
 
-拦截基本类型数据`mock.baseIntercept`配置案例,
-[按照 mockjs 返回](http://mockjs.com/examples.html#String)
+拦截基本类型数据`mock.baseIntercept`配置案例，[建议按照 mockjs 字符、数字、布尔值 规则 返回](http://mockjs.com/examples.html#String).
+
+**可以根据字段名称和名称去定义返回的数据**
 
 ```js
 function baseIntercept(params) {
@@ -106,7 +110,7 @@ function baseIntercept(params) {
 }
 ```
 
-拦截数组类型数据`mock.arrayRule`配置案例
+拦截数组类型数据`mock.arrayRule`配置案例， [建议按照 mockjs 数组 规则 返回](http://mockjs.com/examples.html#Array)
 
 ```js
 function arrayRule(params) {
@@ -126,36 +130,6 @@ api.config.js 文件下的 action 属性
 | dirPath            | 相对类型文件的路径   | _string_   | "../"                                          |
 | requestFnName      | 请求方法名称         | _string_   | "createFetch"                                  |
 | createDefaultModel | 定义请求方法的结构   | _function_ | `createDefaultModel`                           |
-
-默认的`createTypeFileName`如下
-
-```js
-export function createTypeFileName(url) {
-  const urlArr = url
-    .split("/")
-    .filter((it) => !!it)
-    .map((u) => {
-      return u.replace(".", "");
-    });
-
-  if (url.length > 2) {
-    return `${urlArr[0]}-${urlArr[1]}-${urlArr[2]}`;
-  } else {
-    // 返回空则使用swagger.tags.name
-    return "";
-  }
-}
-```
-
-### swagger 配置
-
-api.config.js 文件下的 swagger 属性, swagger 转换后，对应 formatDate 和枚举类型的数据会转换成 mock 数据
-
-| 字段               | 描述                                                              | 类型       | 默认值               |
-| ------------------ | ----------------------------------------------------------------- | ---------- | -------------------- |
-| url                | swagger 数据地址                                                  | _string_   | --                   |
-| modules            | 使用的的接口模块，对应`swagger.tags.name`, 不传则使用所有         | _string_   | --                   |
-| createTypeFileName | ts 类型文件名称，不需要后缀，返回空则默认使用 `swagger.tags.name` | _function_ | `createTypeFileName` |
 
 默认的`createDefaultModel`如下
 
@@ -190,6 +164,36 @@ function createDefaultModel({
 
     ${requestActionsStr}
     `;
+}
+```
+
+### swagger 配置
+
+api.config.js 文件下的 swagger 属性, swagger 转换后，对应 formatDate 和枚举类型的数据会转换成 mock 数据
+
+| 字段               | 描述                                                              | 类型       | 默认值               |
+| ------------------ | ----------------------------------------------------------------- | ---------- | -------------------- |
+| url                | swagger 数据地址                                                  | _string_   | --                   |
+| modules            | 使用的的接口模块，对应`swagger.tags.name`, 不传则使用所有         | _string_   | --                   |
+| createTypeFileName | ts 类型文件名称，不需要后缀，返回空则默认使用 `swagger.tags.name` | _function_ | `createTypeFileName` |
+
+默认的`createTypeFileName`如下
+
+```js
+export function createTypeFileName(url) {
+  const urlArr = url
+    .split("/")
+    .filter((it) => !!it)
+    .map((u) => {
+      return u.replace(".", "");
+    });
+
+  if (url.length > 2) {
+    return `${urlArr[0]}-${urlArr[1]}-${urlArr[2]}`;
+  } else {
+    // 返回空则使用swagger.tags.name
+    return "";
+  }
 }
 ```
 
