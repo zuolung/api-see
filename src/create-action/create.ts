@@ -11,7 +11,7 @@ export function createDefaultModel({
 
   for (const key in data) {
     const item = data[key];
-    if (key !== "Record<string,any>" && item.url) {
+    if (key !== "Record<string,any>" && item.url && item.description) {
       packages.push(key);
       requestActionsStr += `
       // ${item.description}
