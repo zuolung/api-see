@@ -6,7 +6,6 @@ import glob from "glob";
 import * as prettier from "prettier";
 import { watch } from "chokidar";
 import parser from "./parser.js";
-import SparkMD5 from "spark-md5";
 import log from "./log.js";
 import getConfig from "./config/getConfig.js";
 import { createDefaultModel } from "./create-action/create.js";
@@ -14,25 +13,16 @@ import { getPrettierConfig } from "./config/getPrettierConfig.js";
 
 const spinner = ora.default();
 const CWD = process.cwd();
-const API_UI_CACHE_PATH = path_.join(CWD, "./.cache/api-ui-cache.json");
 const API_UI_DATA_PATH = path_.join(CWD, "./.cache/api-ui-data.json");
 const apiConfig = getConfig();
 const { requestImport, requestFnName, dirPath } = apiConfig?.action || {};
-let cacheData = {};
 let result = {};
-if (fs.existsSync(API_UI_CACHE_PATH)) {
-  cacheData = require(API_UI_CACHE_PATH);
-}
 
 if (fs.existsSync(API_UI_DATA_PATH)) {
   result = require(API_UI_DATA_PATH);
 }
 
-export function workFile(
-  targetUrl: string,
-  action: boolean,
-  forceUpdate?: boolean
-) {
+export function workFile(targetUrl: string, action: boolean) {
   const writeActionTarget = path_.resolve(targetUrl, dirPath || "../");
   if (!fs.existsSync(writeActionTarget)) {
     fs.mkdirSync(writeActionTarget);
@@ -45,7 +35,7 @@ export function workFile(
         process.exit(1);
       }
 
-      await workUnit(paths, action, writeActionTarget, forceUpdate);
+      await workUnit(paths, action, writeActionTarget);
 
       if (!fs.existsSync(path_.join(CWD, "./.cache"))) {
         await fs.mkdirSync(path_.join(CWD, "./.cache"));
@@ -55,8 +45,6 @@ export function workFile(
         path_.join(CWD, "./.cache/api-ui-data.json"),
         JSON.stringify(result)
       );
-
-      await fs.writeFileSync(API_UI_CACHE_PATH, JSON.stringify(cacheData));
 
       resolve(true);
     });
@@ -73,7 +61,7 @@ type Iprops = {
 export default async function file(props: Iprops) {
   const { path = "src/actions/types", watch = false, action = false } = props;
   const targetUrl = path_.join(CWD, path);
-  await workFile(targetUrl, action, props.forceUpdate);
+  await workFile(targetUrl, action);
   if (watch) {
     console.info(`开启监听请求字段ts文件`);
 
@@ -93,10 +81,18 @@ function watchAction(
   watcher.on("ready", function () {
     readyOk = true;
   });
-  watcher.on("add", function () {
+  watcher.on("add", function (p) {
+    console.info(
+      log.tips(`
+    新增文件${p}`)
+    );
     if (readyOk) work(targetUrl, action);
   });
-  watcher.on("change", function () {
+  watcher.on("change", function (p) {
+    console.info(
+      log.tips(`
+    文件变更${p}`)
+    );
     if (readyOk) work(targetUrl, action);
   });
   watcher.on("unlink", function () {
@@ -104,61 +100,50 @@ function watchAction(
   });
 }
 
-function workUnit(
-  paths: string[],
-  action: boolean,
-  writeActionTarget: string,
-  forceUpdate?: boolean
-) {
+function workUnit(paths: string[], action: boolean, writeActionTarget: string) {
   return new Promise(async (resolve) => {
     for (let i = 0; i < paths.length; i++) {
       const p = paths[i];
-      const content = await fs.readFileSync(p, "utf-8");
-      const curHash = SparkMD5.hash(content);
+      const parseRes = parser(p);
+      const fileArr = p.split("/");
+      const fileName = fileArr[fileArr.length - 1]?.replace(".ts", "");
+      if (parseRes && fileName) {
+        const def = parseRes.definitions;
+        result[fileName] = def;
+        if (action) {
+          let content = "";
 
-      if (cacheData[p] === curHash && !forceUpdate) {
-        // nothing
-      } else {
-        const parseRes = parser(p);
-        const fileArr = p.split("/");
-        const fileName = fileArr[fileArr.length - 1]?.replace(".ts", "");
-        if (parseRes && fileName) {
-          const def = parseRes.definitions;
-          result[fileName] = def;
-          if (action) {
-            let content = "";
-
-            if (!apiConfig?.action?.createDefaultModel) {
-              content = createDefaultModel({
-                data: def,
-                fileName: fileName,
-                requestImport,
-                requestFnName,
-              });
-            } else {
-              content = apiConfig?.action?.createDefaultModel(
-                fileName,
-                def as any
-              );
-            }
-
-            let prettierConfig = await getPrettierConfig();
-
-            const formatContent = prettier.format(content, {
-              ...prettierConfig,
-              parser: "typescript",
+          if (!apiConfig?.action?.createDefaultModel) {
+            content = createDefaultModel({
+              data: def,
+              fileName: fileName,
+              requestImport,
+              requestFnName,
             });
-
-            fs.writeFileSync(
-              path_.resolve(writeActionTarget, `${fileName}.ts`),
-              formatContent
-            );
+          } else {
+            content = apiConfig?.action?.createDefaultModel({
+              data: def,
+              fileName: fileName,
+              requestImport,
+              requestFnName,
+            });
           }
-        }
 
-        spinner.info(log.tips(`解析接口模块: ${p}`));
-        cacheData[p] = curHash;
+          let prettierConfig = await getPrettierConfig();
+
+          const formatContent = prettier.format(content, {
+            ...prettierConfig,
+            parser: "typescript",
+          });
+
+          fs.writeFileSync(
+            path_.resolve(writeActionTarget, `${fileName}.ts`),
+            formatContent
+          );
+        }
       }
+
+      spinner.info(log.tips(`解析接口模块: ${p}`));
     }
 
     spinner.succeed(log.success("所有ts模块解析完成"));

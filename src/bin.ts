@@ -30,7 +30,7 @@ program
   .description("glob request types")
   .option("-p, --path <path>", "request types path")
   .option("-w, --watch <watch>", "watch files change")
-  .option("-force, --force <forceUpdate>", "update actions widthout cache")
+  .option("-f, --file <file>", "create resquest method files")
   .action(file);
 
 program

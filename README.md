@@ -15,12 +15,9 @@ yarn add api-see
 
 ### 快速开始
 
-以 ^1.3.0 版本为准
-
 - `api-see watch`: 监听请求字段类型文件，生成 描述接口文档 的数据，`server`独立构建文档服务，`mock`开启 mock 服务, `action`根据请求字段类型生成请求方法
 - `api-see build`: 接口文档单独打包
 - `api-see file`: 执行一次生成 描述接口文档 的数据
-- `api-see file --force true`: 不使用缓存
 - `api-see swagger`: 根据 swagger 数据生成 本地 请求字段类型 ts 文件、请求方法 ts 文件
 
 ```json
@@ -28,8 +25,8 @@ yarn add api-see
   "scripts": {
     "api:watch": "api-see watch --path ./src/actions/types --server true --mock true --action true",
     "api:build": "api-see build --path ./src/actions/types",
-    "api:file": "api-see file --path ./src/actions/types",
-    "swagger": "api-see swagger --url https://xxxxxxxx/v2/api-docs"
+    "api:file": "api-see file --path ./src/actions/types --action true",
+    "swagger": "api-see swagger --path ./src/actions/types --url https://xxxxxxxx/v2/api-docs"
   }
 }
 ```
@@ -169,33 +166,13 @@ function createDefaultModel({
 
 ### swagger 配置
 
-api.config.js 文件下的 swagger 属性, swagger 转换后，对应 formatDate 和枚举类型的数据会转换成 mock 数据
+api.config.js 文件下的 swagger 属性, swagger 转换后，对应 formatDate 和枚举类型的数据会转换成 mock 数据。
+生成请求字段文件的名称为`swagger.tags.name`,如果有中文则转拼音
 
-| 字段               | 描述                                                              | 类型       | 默认值               |
-| ------------------ | ----------------------------------------------------------------- | ---------- | -------------------- |
-| url                | swagger 数据地址                                                  | _string_   | --                   |
-| modules            | 使用的的接口模块，对应`swagger.tags.name`, 不传则使用所有         | _string_   | --                   |
-| createTypeFileName | ts 类型文件名称，不需要后缀，返回空则默认使用 `swagger.tags.name` | _function_ | `createTypeFileName` |
-
-默认的`createTypeFileName`如下
-
-```js
-export function createTypeFileName(url) {
-  const urlArr = url
-    .split("/")
-    .filter((it) => !!it)
-    .map((u) => {
-      return u.replace(".", "");
-    });
-
-  if (url.length > 2) {
-    return `${urlArr[0]}-${urlArr[1]}-${urlArr[2]}`;
-  } else {
-    // 返回空则使用swagger.tags.name
-    return "";
-  }
-}
-```
+| 字段    | 描述                                                      | 类型     | 默认值 |
+| ------- | --------------------------------------------------------- | -------- | ------ |
+| url     | swagger 数据地址                                          | _string_ | --     |
+| modules | 使用的的接口模块，对应`swagger.tags.name`, 不传则使用所有 | _string_ | --     |
 
 ##### 如何定义请求字段
 

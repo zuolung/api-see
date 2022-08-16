@@ -15,7 +15,12 @@ export default function apiLoader(source) {
         "/** API_DATA_IMPORT */",
         `import ApiData from "${join(CWD, "./.cache/api-ui-data.json")}"`
       )
-      .replace(`/** API_DATA_USE */`, `apiData={ApiData} mockPort={${port}}`);
+      .replace(
+        `/** API_DATA_USE */`,
+        `apiData={ApiData} mockPort={${port}} ${
+          apiConfig.title ? `title={${apiConfig.title}}` : ""
+        }`
+      );
   }
 
   callback(null, source);

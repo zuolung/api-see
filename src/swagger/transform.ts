@@ -40,18 +40,6 @@ export async function transform(
 
   console.info(log.tips("swagger数据解析中..."));
 
-  for (let key in definitions) {
-    let def = definitions[key];
-
-    const parseResult = parseDef(def);
-    baseTypes += `
-    /**
-     * ${def.description || "--"}
-     */
-    export type ${formatBaseTypeKey(key)} = ${parseResult.codes}`;
-  }
-  await fs.writeFileSync(BaseTypesUrl, formatTs(baseTypes));
-
   for (let key in paths) {
     const method = Object.keys(paths[key])[0];
     const item = paths[key][method];
@@ -83,7 +71,11 @@ export async function transform(
       reqCodes += `} \n `;
 
       let resCodes = ``;
-      if (item.responses["200"]?.schema) {
+      if (
+        item.responses["200"]?.schema &&
+        (item.responses["200"]?.schema?.type === "object" ||
+          item.responses["200"]?.schema.$ref)
+      ) {
         const schema = item.responses["200"];
         const resParseResult = parseDef(schema);
         resCodes += resParseResult.codes;
@@ -120,10 +112,24 @@ export async function transform(
     )} } from "../baseTypes";
       `;
     await fs.writeFileSync(
-      pat.join(typesUrl, `${createTypeFileName(mode.firstUrl)}.ts`),
+      pat.join(typesUrl, `${createTypeFileName(nn)}.ts`),
       formatTs(`${baseImport}${mode.codes}`)
     );
   }
+  /** todo 只生成使用的基础类型 */
+  for (let key in definitions) {
+    let def = definitions[key];
+
+    const parseResult = parseDef(def);
+    const commentsParams = {};
+    if (def.description) commentsParams["description"] = def.description;
+    const comments = createComments(commentsParams);
+
+    baseTypes += `${comments}export type ${formatBaseTypeKey(key)} = ${
+      parseResult.codes
+    }`;
+  }
+  await fs.writeFileSync(BaseTypesUrl, formatTs(baseTypes));
 
   console.info(
     log.success(`
@@ -145,21 +151,27 @@ function parseDef(def: Record<string, any>, kk?: string) {
     if (data.type && isBaseType(data.type)) {
       const type__ = resetTypeName(data.type);
       let $value = "";
-      let $description = data.description || "";
+      let $description = data.description;
       if (key) {
-        if (type__ === "string") {
+        if (type__ === "string" || type__ === "number") {
           if (data.default) $value = data.default;
-          if (data.enum) $value = `[${data.enum.join(",")}]`;
+          if (data.enum)
+            $value = `[${data.enum
+              .map((it) => {
+                if (!it.includes(`'`) && !it.includes(`"`)) return `"${it}"`;
+                return it;
+              })
+              .join(",")}]`;
           if (data.format === "date-time") {
             $value = `#datetime()`;
           }
         }
-        const comments = `
-        /**
-         * ${$description}
-         * @value ${$value}
-         */
-        `;
+
+        const commentsParams: Record<string, any> = {};
+        if ($value) commentsParams["value"] = $value;
+        if ($description) commentsParams["description"] = $description;
+
+        const comments = createComments(commentsParams);
 
         return `${comments}${key}${
           data.required === false ? "?" : ""
@@ -218,24 +230,24 @@ function parseDef(def: Record<string, any>, kk?: string) {
       }
       res += "[] \n ";
     } else if (data.$ref) {
-      const comments = `
-      /**
-       * ${data.description || ""}
-       * @rule ${data.rule || ""}
-       */
-      `;
+      const commentsParams: Record<string, any> = {};
+      if (data.rule) commentsParams["value"] = data.rule;
+      if (data.description) commentsParams["description"] = data.description;
+
+      const comments = createComments(commentsParams);
+
       const $ref = formatBaseTypeKey(data.$ref.replace("#/definitions/", ""));
       dependencies.push($ref);
       return `${
         key ? `${comments}${key}${data.required === false ? "?" : ""}:` : ""
       }${$ref}${noMark ? "" : " \n "}`;
     } else if (data.schema?.$ref) {
-      const comments = `
-      /**
-       * ${data.description || ""}
-       * @rule ${data.rule || ""}
-       */
-      `;
+      const commentsParams: Record<string, any> = {};
+      if (data.rule) commentsParams["value"] = data.rule;
+      if (data.description) commentsParams["description"] = data.description;
+
+      const comments = createComments(commentsParams);
+
       const $ref = formatBaseTypeKey(
         data.schema?.$ref.replace("#/definitions/", "")
       );
@@ -326,4 +338,20 @@ function filterRepeatName(arr = []) {
   }
 
   return newArr;
+}
+
+function createComments(params?: Record<string, any>) {
+  let res = "";
+  if (params && Object.keys(params).length > 0) {
+    res += `/**
+    `;
+    for (let key in params) {
+      res += ` * @${key} ${params[key]}
+      `;
+    }
+    res += `*/
+    `;
+  }
+
+  return res;
 }

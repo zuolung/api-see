@@ -5,6 +5,7 @@ import log from "../log.js";
 type Iconfig = {
   /** 请求ts的文件路径 */
   path?: string;
+  title?: string;
   buildPath?: string;
   buildPort?: number;
   mock?: {
@@ -28,23 +29,22 @@ type Iconfig = {
     requestFnName?: string;
     requestSuffix?: string;
     /** 自定义请求方法 */
-    createDefaultModel?: (
-      fileName: string,
-      data: {
-        url: string;
-        description: string;
-        method: string;
-      }[]
-    ) => string;
+    createDefaultModel?: (params: {
+      data: any;
+      fileName: string;
+      requestImport?: string;
+      requestFnName?: string;
+    }) => string;
   };
   /** swagger生成请求字段类型 */
   swagger?: {
     url?: string;
     /** 使用到的模块 */
     modules?: string[];
-    createTypeFileName: (url: string) => string;
   };
 } & Record<string, any>;
+
+let ifWarned = false;
 
 export default function getConfig(): Iconfig {
   const configPath = join(process.cwd(), "api.config.js");
@@ -54,8 +54,10 @@ export default function getConfig(): Iconfig {
     const apiConfig = require(configPath);
     return apiConfig as Iconfig;
   } else {
-    log.warning("根目录找不到api.config.js文件");
-
+    if (!ifWarned) {
+      log.warning("根目录找不到api.config.js文件");
+      ifWarned = true;
+    }
     return {
       path: "./src/actions/types",
     };
