@@ -54,7 +54,6 @@ export default function main() {
       if (reqUrl === item.url && item.url) {
         const mockResult = transformMock(item.result, null, item.url);
         let mockData = mock(mockResult);
-        console.info(mockResult, "------------");
         mockData = prettier.format(JSON.stringify(mockData), {
           semi: false,
           parser: "json",
@@ -101,7 +100,6 @@ export default function main() {
             }
 
             if (Array.isArray(value__)) {
-              console.info("if arr in base");
               value__ = randomEnum(value__);
             }
 
