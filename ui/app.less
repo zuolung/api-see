@@ -66,6 +66,20 @@
     background-color: #fafbfc;
     overflow: hidden;
     user-select: none;
+    overflow-x: scroll;
+
+    &::-webkit-scrollbar-track-piece {
+      background: @primary-line-color;
+      border-radius: 2px;
+    }
+    &::-webkit-scrollbar {
+    width: 2px;
+    height: 2px;
+    }
+    &::-webkit-scrollbar-thumb {
+    border-radius: 2px;
+    background: #EEEEEE;
+    }
 
     .mudules-item {
       margin-right: 20px;
