@@ -8,14 +8,15 @@ import file from "../file";
 type Iprops = {
   url?: string;
   path?: string;
+  modules?: string;
 };
 
 export default async function swagger(props: Iprops) {
-  const { path = "src/actions/types" } = props;
+  const { path = "src/actions/types", modules } = props;
   const config = getConfig();
   const url = props.url || config?.swagger?.url;
   const path_ = path || config?.path;
-  const modules = config?.swagger?.modules;
+  const modules_ = modules ? modules.split(",") : config?.swagger?.modules;
   if (!url) {
     log.error("can not get swagger url");
     return;
@@ -34,11 +35,11 @@ swagger data                                                    +
 + 🚴‍♀️ 接口模块数: ${swaggerData["tags"].length}                      
 + 🚗 接口数: ${Object.keys(swaggerData["paths"]).length}           
 + 🚄 公共类型数: ${Object.keys(swaggerData["definitions"]).length}  
-+ 🐘 执行模块: ${modules ? modules.join(`, `) : "所有模块"}          
++ 🐘 执行模块: ${modules_ ? modules_.join(`, `) : "所有模块"}          
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 `)
   );
-  await transform(swaggerData, path_, modules, createTypeFileName);
+  await transform(swaggerData, path_, modules_, createTypeFileName);
 
   setTimeout(() => {
     file({

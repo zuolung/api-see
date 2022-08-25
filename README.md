@@ -1,5 +1,7 @@
 ## api-see 是什么？
 
+![image](https://raw.githubusercontent.com/zuolung/api-ui-demo/main/theme.png)
+
 `api-see` 是 `typeScript` 的最佳拍档，它可以帮你生成具有类型定义的请求方案和接口文档。
 
 - 无需自行书写请求代码，把 HTTP 接口当做函数调用
@@ -18,7 +20,7 @@ yarn add api-see
 - `api-see watch`: 监听请求字段类型文件，生成 描述接口文档 的数据，`server`独立构建文档服务，`mock`开启 mock 服务, `action`根据请求字段类型生成请求方法
 - `api-see build`: 接口文档单独打包
 - `api-see file`: 执行一次生成 描述接口文档 的数据
-- `api-see swagger`: 根据 swagger 数据生成 本地 请求字段类型 ts 文件、请求方法 ts 文件
+- `api-see swagger`: 根据 swagger 数据生成 本地 请求字段类型 ts 文件、请求方法 ts 文件, 可选择对应的 swagger.tag 接口模块名称更新，可以是中文模块
 
 ```json
 {
@@ -26,7 +28,7 @@ yarn add api-see
     "api:watch": "api-see watch --path ./src/actions/types --server true --mock true --action true",
     "api:build": "api-see build --path ./src/actions/types",
     "api:file": "api-see file --path ./src/actions/types --action true",
-    "swagger": "api-see swagger --path ./src/actions/types --url https://xxxxxxxx/v2/api-docs"
+    "swagger": "api-see swagger --path ./src/actions/types --url https://xxxxxxxx/v2/api-docs --modules pet"
   }
 }
 ```
