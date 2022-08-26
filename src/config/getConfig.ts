@@ -9,6 +9,8 @@ type Iconfig = {
   buildPath?: string;
   buildPort?: number;
   mock?: {
+    /** 统一设置接口的延时返回 */
+    timeout?: number;
     port?: number;
     baseIntercept?: (params: {
       url: string;

@@ -1,4 +1,4 @@
-import * as TJS from 'typescript-json-schema'
+import * as TJS from "typescript-json-schema";
 
 export default function tsTypeParse(file: string) {
   const program = TJS.getProgramFromFiles(
@@ -6,12 +6,19 @@ export default function tsTypeParse(file: string) {
     {
       strictNullChecks: true,
     },
-    './',
-  )
-  return TJS.generateSchema(program, '*', {
+    "./"
+  );
+  return TJS.generateSchema(program, "*", {
     required: true,
-    validationKeywords: ['value', 'rule', 'url', 'method', 'introduce'],
+    validationKeywords: [
+      "value",
+      "rule",
+      "url",
+      "method",
+      "introduce",
+      "timeout",
+    ],
     excludePrivate: true,
     ignoreErrors: true,
-  })
+  });
 }

@@ -11,7 +11,6 @@ const { port } = apiConfig?.mock || {};
 
 const devServer = {
   port: buildPort || 7878,
-  host: "localhost",
   hot: true,
   open: true,
   static: {

@@ -2,12 +2,14 @@
 
 ![image](https://raw.githubusercontent.com/zuolung/api-ui-demo/main/theme.png)
 
-`api-see` 是 `typeScript` 的最佳拍档，它可以帮你生成具有类型定义的请求方案和接口文档。
+`api-see` 是日常开发中接口的效率化工具。
 
-- 无需自行书写请求代码，把 HTTP 接口当做函数调用
 - 代码自动化转化为接口文档，代码和文档完全保持一致
+- 自动生成请求方法
 - 本地生成 mock 服务，提升联调效率
-- 根据后端 swagger 文档生成接口请求字段类型、请求方法，然后简易 mock 服务
+- 根据后端 swagger 文档生成接口请求字段类型
+
+接口定义的方案可以分为 `前端ts文件定义接口` 和 `后端swagger定义接口`, 通过`api-see`工具我们可以快速实现代码自动化 和数据自动化
 
 ### 安装
 
@@ -30,22 +32,6 @@ yarn add api-see
     "api:file": "api-see file --path ./src/actions/types --action true",
     "swagger": "api-see swagger --path ./src/actions/types --url https://xxxxxxxx/v2/api-docs --modules pet"
   }
-}
-```
-
-### 将文档 UI 应用到测试环境
-
-开发环境只需要开启 `api-see watch --path ./src/actions/types --mock true --action true`
-正式打包则使用 `api-see file`, 再执行本地项目的构建
-
-```jsx
-import { ApiUi } from "api-see";
-// 默认当前项目生成接口文档数据，.gitignore文件加上 .cache
-import apiData from "@/../.cache/api-ui-data.json";
-import "api-see/ui/app.less";
-
-export default function Index(): React.ReactNode {
-  return <ApiUi title="crm接口文档" mockPort={10998} apiData={apiData} />;
 }
 ```
 
@@ -185,6 +171,7 @@ api.config.js 文件下的 swagger 属性, swagger 转换后，对应 formatDate
 - `@value`: 基础类型字段的固定 mock 数据, 可以使用 mockjs 规则,规则前缀`@`改为`#`,例如#title、#date('YYYY-MM-DD')
 - `@rule`: mock 复杂数据的规则，例如：19-20，生成数组数组 19 条或者 20 条
 - 更多 mock 配置，请查看[mockjs](http://mockjs.com/)
+- mockjs 官网域名到期可以前往[第三方博客-mockjs 使用介绍](https://www.jianshu.com/p/d812ce349265)
 
 ```js
 /**
@@ -220,15 +207,46 @@ export type userInfo = {
        * @rule 19-20
        **/
       list: {
+       /**
+       * 用户拥有的角色， 《注意字符需要双引号》
+       * @value ["运营", "HR", "销售"]
+       **/
+        roles: string[]
       /**
        * 用户名称
        * @value #title
        **/
         userName: string
+      /**
+       * 枚举值字符 《注意字符需要双引号》
+       * @value ["状态1", "状态2"]
+       **/
+        someone: string
+      /**
+       * 枚举值数字
+       * @value [1, 2]
+       **/
+        someNum: number
       }[]
     };
   };
 };
+```
+
+### 将文档 UI 应用到测试环境
+
+开发环境只需要开启 `api-see watch --path ./src/actions/types --mock true --action true`
+正式打包则使用 `api-see file`, 再执行本地项目的构建
+
+```jsx
+import { ApiUi } from "api-see";
+// 默认当前项目生成接口文档数据，.gitignore文件加上 .cache
+import apiData from "@/../.cache/api-ui-data.json";
+import "api-see/ui/app.less";
+
+export default function Index(): React.ReactNode {
+  return <ApiUi title="crm接口文档" mockPort={10998} apiData={apiData} />;
+}
 ```
 
 ### 使用案例

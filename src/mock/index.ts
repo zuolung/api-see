@@ -8,7 +8,12 @@ import path from "path";
 import * as ora from "ora";
 
 const apiConfig = getConfig();
-const { port, baseIntercept, arrayRule } = apiConfig?.mock || {};
+const {
+  port,
+  baseIntercept,
+  arrayRule,
+  timeout: timeoutPublic,
+} = apiConfig?.mock || {};
 const data = require(path.join(process.cwd(), "./.cache/api-ui-data.json"));
 
 main();
@@ -26,6 +31,7 @@ export default function main() {
       const it = items[kk];
       mockData.push({
         url: it.url,
+        timeout: it.timeout,
         result: it?.properties?.response || {},
         params: it?.properties?.request || {},
       });
@@ -58,7 +64,9 @@ export default function main() {
           semi: false,
           parser: "json",
         });
-        res.end(mockData);
+        setTimeout(() => {
+          res.end(mockData);
+        }, item.timeout || timeoutPublic || 0);
       }
     });
 
@@ -194,6 +202,7 @@ export default function main() {
             return item;
           });
         }
+
         return value__ || [data["items"].type];
       }
     }
