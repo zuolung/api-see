@@ -3,6 +3,7 @@ import http from "http";
 import * as prettier from "prettier";
 import { mock } from "mockjs";
 import log from "../log.js";
+import deepMerge from "deepmerge";
 import getConfig from "../config/getConfig.js";
 import path from "path";
 import * as ora from "ora";
@@ -205,6 +206,13 @@ export default function main() {
 
         return value__ || [data["items"].type];
       }
+    } else if (data["allOf"] && Array.isArray(data["allOf"])) {
+      // 解决`&`运算类型数据
+      let handleData = {};
+      data["allOf"].reverse().map((item) => {
+        handleData = deepMerge(handleData, item);
+      });
+      return transformMock(handleData, target, url);
     }
   }
 }

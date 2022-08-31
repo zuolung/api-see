@@ -1,5 +1,6 @@
 import React, { useLayoutEffect, useCallback, useState, useEffect } from "react";
 import ReactJson from "react-json-view";
+import deepMerge from "deep-merge";
 export function ApiUi(props) {
   const {
     apiData,
@@ -7,6 +8,7 @@ export function ApiUi(props) {
     mockPort = 10099
   } = props;
   const data = {};
+  console.info("haha");
   Object.keys(apiData).map(key => {
     data[key] = {};
 
@@ -35,6 +37,7 @@ export function ApiUi(props) {
   };
 
   useLayoutEffect(() => {
+    if (title) document.title = title;
     hashChange();
     window.addEventListener("hashchange", hashChange);
     return () => {
@@ -172,6 +175,14 @@ function transformData(data, target) {
     } else {
       return [data.items.type];
     }
+  } else if (data["allOf"] && Array.isArray[data["allOf"]]) {
+    // 解决`&`运算类型数据
+    let handleData = {};
+    data["allOf"].reverse().map(item => {
+      handleData = deepMerge(handleData, item);
+    });
+    console.info(handleData, "handleData ");
+    return transformData(handleData, target);
   }
 }
 
