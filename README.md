@@ -1,8 +1,8 @@
 ## api-see 是什么？
 
-![image](https://raw.githubusercontent.com/zuolung/api-ui-demo/main/theme.png)
-
 `api-see` 是日常开发中接口的效率化工具。
+
+![image](https://raw.githubusercontent.com/zuolung/api-ui-demo/main/theme.png)
 
 - 代码自动化转化为接口文档，代码和文档完全保持一致
 - 自动生成请求方法
@@ -17,20 +17,45 @@
 yarn add api-see
 ```
 
-### 快速开始
+### 快速开始`前端ts文件定义接口`
 
-- `api-see watch`: 监听请求字段类型文件，生成 描述接口文档 的数据，`server`独立构建文档服务，`mock`开启 mock 服务, `action`根据请求字段类型生成请求方法
+- `api-see watch`: 监听请求字段类型文件，生成 描述接口文档 的数据，`server`本地文档服务,`mock`开启 mock 服务, `action`根据请求字段类型生成请求方法
 - `api-see build`: 接口文档单独打包
-- `api-see file`: 执行一次生成 描述接口文档 的数据
-- `api-see swagger`: 根据 swagger 数据生成 本地 请求字段类型 ts 文件、请求方法 ts 文件, 可选择对应的 swagger.tag 接口模块名称更新，可以是中文模块
+- `api-see file`: 执行一次生成 描述接口文档 的数据, 应用场景：1.刚拉取业务项目初始化、2.仅想重新生成一次请求方法
 
 ```json
 {
   "scripts": {
+    // ...
     "api:watch": "api-see watch --path ./src/actions/types --server true --mock true --action true",
     "api:build": "api-see build --path ./src/actions/types",
     "api:file": "api-see file --path ./src/actions/types --action true",
-    "swagger": "api-see swagger --path ./src/actions/types --url https://xxxxxxxx/v2/api-docs --modules pet"
+    "build1": "yarn build & yarn api:build"
+  }
+}
+```
+
+接口文档单独打包`yarn build1`, nginx 静态服务的情况下，建议打包的目录结构如下
+
+```
+- build
+  - index.html
+  ......
+  - api-see (api-see打包的结果，可以通过配置文件配置打包路径)
+```
+
+### 快速开始`前端ts文件定义接口`
+
+- `api-see swagger`: 生成请求字段类型文件， 再执行`api-see watch`
+- `api-see watch`: 监听请求字段类型文件，生成 描述接口文档 的数据，`server`本地文档服务,`mock`开启 mock 服务, `action`根据请求字段类型生成请求方法
+
+是否再生成新的接口文档可以自己选择，如果只需要 mock 服务，将`--server true`移除即可
+
+```json
+{
+  "scripts": {
+    "swagger": "api-see swagger --path ./src/actions/swagger/types --url https://scapi.lsmart.wang/v2/api-docs",
+    "api:watch": "api-see watch --path ./src/actions/types --server true --mock true --action true"
   }
 }
 ```
@@ -50,11 +75,12 @@ yarn add api-see
 api.config.js 文件下的 mock 属性, 前端定义接口通过`定义请求字段`的注释来 mock 数据或者拦截 mock 服务的方式，
 基于后端 swagger 只能通过拦截 mock 服务的方式，mock 服务会返回根据 swagger 的枚举数据和 formatDate 等数据类型生成的默认的 mock 数据
 
-| 字段          | 描述             | 类型       | 默认值 |
-| ------------- | ---------------- | ---------- | ------ |
-| port          | mock 服务端口    | _number_   | 10099  |
-| baseIntercept | 拦截基本类型数据 | _function_ | --     |
-| arrayRule     | 拦截数组类型数据 | _function_ | --     |
+| 字段          | 描述                   | 类型       | 默认值 |
+| ------------- | ---------------------- | ---------- | ------ |
+| port          | mock 服务端口          | _number_   | 10099  |
+| timeout       | 所有接口延时返回的时间 | _number_   | 0      |
+| baseIntercept | 拦截基本类型数据       | _function_ | --     |
+| arrayRule     | 拦截数组类型数据       | _function_ | --     |
 
 拦截基本类型数据`mock.baseIntercept`配置案例，[建议按照 mockjs 字符、数字、布尔值 规则 返回](http://mockjs.com/examples.html#String).
 
@@ -167,17 +193,21 @@ api.config.js 文件下的 swagger 属性, swagger 转换后，对应 formatDate
 
 - `普通注释`: 接口描述或字段描述
 - `@url`: 请求路径
+- `@timeout`: 接口延时返回 单位毫秒
 - `@introduce`: 接口额外的详细介绍
 - `@value`: 基础类型字段的固定 mock 数据, 可以使用 mockjs 规则,规则前缀`@`改为`#`,例如#title、#date('YYYY-MM-DD')
 - `@rule`: mock 复杂数据的规则，例如：19-20，生成数组数组 19 条或者 20 条
 - 更多 mock 配置，请查看[mockjs](http://mockjs.com/)
 - mockjs 官网域名到期可以前往[第三方博客-mockjs 使用介绍](https://www.jianshu.com/p/d812ce349265)
 
-```js
+支持外部定义公共类型，例如请求结构，分页数据接口都是可以提取出来，像分页数据可以公共设置为 数据`rule`19-20， total 总数为 39，随机数据取测试页面里的分页功能
+
+```typescript
 /**
  * 获取用户列表信息
  * @url /z/common/user/list
  * @introduce 这是请求所有用户数据的接口
+ * @timeout 1000
  * @method GET
  */
 export type userInfo = {
@@ -185,11 +215,11 @@ export type userInfo = {
     /**
      * 每页数据数量
      **/
-    pageSize: number
+    pageSize: number;
     /**
      * 第几页
      **/
-    pageNum: number
+    pageNum: number;
   };
   response: {
     /**
@@ -201,33 +231,33 @@ export type userInfo = {
        * 用户总数
        * @value 39
        **/
-      total: number
+      total: number;
       /**
        * 用户列表
        * @rule 19-20
        **/
       list: {
-       /**
-       * 用户拥有的角色， 《注意字符需要双引号》
-       * @value ["运营", "HR", "销售"]
-       **/
-        roles: string[]
-      /**
-       * 用户名称
-       * @value #title
-       **/
-        userName: string
-      /**
-       * 枚举值字符 《注意字符需要双引号》
-       * @value ["状态1", "状态2"]
-       **/
-        someone: string
-      /**
-       * 枚举值数字
-       * @value [1, 2]
-       **/
-        someNum: number
-      }[]
+        /**
+         * 用户拥有的角色， 《注意字符需要双引号》
+         * @value ["运营", "HR", "销售"]
+         **/
+        roles: string[];
+        /**
+         * 用户名称
+         * @value #title
+         **/
+        userName: string;
+        /**
+         * 枚举值字符 《注意字符需要双引号》
+         * @value ["状态1", "状态2"]
+         **/
+        someone: string;
+        /**
+         * 枚举值数字
+         * @value [1, 2]
+         **/
+        someNum: number;
+      }[];
     };
   };
 };

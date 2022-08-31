@@ -14,7 +14,7 @@ export default async function Run(props: Iprops) {
   const { path = "src/actions/types" } = props;
 
   await file({
-    path: apiUi["path"] || path,
+    path: path || apiUi["path"],
     watch: false,
   });
 

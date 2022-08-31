@@ -9,10 +9,11 @@ type Iprops = {
   url?: string;
   path?: string;
   modules?: string;
+  action?: boolean;
 };
 
 export default async function swagger(props: Iprops) {
-  const { path = "src/actions/types", modules } = props;
+  const { path = "src/actions/types", modules, action } = props;
   const config = getConfig();
   const url = props.url || config?.swagger?.url;
   const path_ = path || config?.path;
@@ -44,7 +45,7 @@ swagger data                                                    +
   setTimeout(() => {
     file({
       path: path_,
-      action: true,
+      action: action,
       forceUpdate: true,
     });
   });

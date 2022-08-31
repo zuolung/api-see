@@ -41,5 +41,6 @@
     // }
   },
   "include": ["src/**/*", "types"],
+  "exclude": ["./tsconfig.json"],
   "compileOnSave": false
 }
