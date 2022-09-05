@@ -9,15 +9,17 @@
 - 本地生成 mock 服务，提升联调效率
 - 根据后端 swagger 文档生成接口请求字段类型
 
-接口定义的方案可以分为 `前端ts文件定义接口` 和 `后端swagger定义接口`, 通过`api-see`工具我们可以快速实现代码自动化 和数据自动化
-
 ### 安装
 
 ```
 yarn add api-see
 ```
 
-### 快速开始`前端ts文件定义接口`
+接口定义的方案可以分为 `前端ts文件定义接口` 和 `后端swagger定义接口`, 通过`api-see`工具我们可以快速实现代码自动化 和数据自动化
+
+### 快速开始
+
+### `前端 ts 文件定义接口
 
 - `api-see watch`: 监听请求字段类型文件，生成 描述接口文档 的数据，`server`本地文档服务,`mock`开启 mock 服务, `action`根据请求字段类型生成请求方法
 - `api-see build`: 接口文档单独打包
@@ -30,21 +32,21 @@ yarn add api-see
     "api:watch": "api-see watch --path ./src/actions/types --server true --mock true --action true",
     "api:build": "api-see build --path ./src/actions/types",
     "api:file": "api-see file --path ./src/actions/types --action true",
-    "build1": "yarn build & yarn api:build"
+    "build": "yarn build & yarn api:build"
   }
 }
 ```
 
-接口文档单独打包`yarn build1`, nginx 静态服务的情况下，建议打包的目录结构如下
+接口文档单独打包`yarn build`, nginx 静态服务的情况下，建议通过`buildPath`配置打包的目录结构如下
 
 ```
-- build
+- build （项目打包文件）
   - index.html
   ......
   - api-see (api-see打包的结果，可以通过配置文件配置打包路径)
 ```
 
-### 快速开始`前端ts文件定义接口`
+##### 服务端 swagger 定义接口
 
 - `api-see swagger`: 生成请求字段类型文件， 再执行`api-see watch`
 - `api-see watch`: 监听请求字段类型文件，生成 描述接口文档 的数据，`server`本地文档服务,`mock`开启 mock 服务, `action`根据请求字段类型生成请求方法
@@ -82,7 +84,7 @@ api.config.js 文件下的 mock 属性, 前端定义接口通过`定义请求字
 | baseIntercept | 拦截基本类型数据       | _function_ | --     |
 | arrayRule     | 拦截数组类型数据       | _function_ | --     |
 
-拦截基本类型数据`mock.baseIntercept`配置案例，[建议按照 mockjs 字符、数字、布尔值 规则 返回](http://mockjs.com/examples.html#String).
+拦截基本类型数据`mock.baseIntercept`配置案例，[建议按照 mockjs 字符、数字、布尔值 规则 返回](https://www.jianshu.com/p/d812ce349265).
 
 **可以根据字段名称和名称去定义返回的数据**
 
@@ -121,7 +123,7 @@ function baseIntercept(params) {
 }
 ```
 
-拦截数组类型数据`mock.arrayRule`配置案例， [建议按照 mockjs 数组 规则 返回](http://mockjs.com/examples.html#Array)
+拦截数组类型数据`mock.arrayRule`配置案例， [建议按照 mockjs 数组 规则 返回](https://www.jianshu.com/p/d812ce349265)
 
 ```js
 function arrayRule(params) {
@@ -197,8 +199,7 @@ api.config.js 文件下的 swagger 属性, swagger 转换后，对应 formatDate
 - `@introduce`: 接口额外的详细介绍
 - `@value`: 基础类型字段的固定 mock 数据, 可以使用 mockjs 规则,规则前缀`@`改为`#`,例如#title、#date('YYYY-MM-DD')
 - `@rule`: mock 复杂数据的规则，例如：19-20，生成数组数组 19 条或者 20 条
-- 更多 mock 配置，请查看[mockjs](http://mockjs.com/)
-- mockjs 官网域名到期可以前往[第三方博客-mockjs 使用介绍](https://www.jianshu.com/p/d812ce349265)
+- 更多 mock 配置，请查看[mockjs](https://www.jianshu.com/p/d812ce349265)
 
 支持外部定义公共类型，例如请求结构，分页数据接口都是可以提取出来，像分页数据可以公共设置为 数据`rule`19-20， total 总数为 39，随机数据取测试页面里的分页功能
 
