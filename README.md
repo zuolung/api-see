@@ -143,6 +143,7 @@ api.config.js 文件下的 action 属性
 | dirPath            | 相对类型文件的路径   | _string_   | "../"                                          |
 | requestFnName      | 请求方法名称         | _string_   | "createFetch"                                  |
 | createDefaultModel | 定义请求方法的结构   | _function_ | `createDefaultModel`                           |
+| requestSuffix      | 请求方法的后缀       | _function_ | `createDefaultModel`                           |
 
 默认的`createDefaultModel`如下
 

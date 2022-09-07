@@ -5,6 +5,7 @@ export function createDefaultModel({
   requestFnName = "createFetch",
   fileName = "a",
   data = {},
+  requestSuffix = "Action",
 }) {
   const packages: string[] = [];
   let requestActionsStr = "";
@@ -15,7 +16,7 @@ export function createDefaultModel({
       packages.push(key);
       requestActionsStr += `
       // ${item.description}
-      export const ${key} = ${requestFnName}<${key}['request'], ${key}['response']>('${item.url}', '${item.method}');
+      export const ${key}${requestSuffix} = ${requestFnName}<${key}['request'], ${key}['response']>('${item.url}', '${item.method}');
       `;
     }
   }
