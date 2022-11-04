@@ -1,11 +1,12 @@
 import pat from "path";
+import { pinyin } from "pinyin-pro";
 import fs from "fs";
 import prettier from "prettier";
 import * as ora from "ora";
 import log from "../log.js";
 import { getPrettierConfig } from "../config/getPrettierConfig.js";
-import { createTypeFileName } from "./createTypeFileName";
-import versionCompatible from "./versionCompatible";
+import { createTypeFileName } from "./createTypeFileName.js";
+import versionCompatible from "./versionCompatible.js";
 
 const typeNameCache: string[] = [];
 let prettierConfig = {};
@@ -46,7 +47,9 @@ export async function transform(
   for (const key in paths) {
     const method = Object.keys(paths[key])[0] as string;
     const item = paths[key][method];
-    const moduleName = item.tags[0];
+    const moduleName = modules
+      ? item.tags.find((it) => modules.includes(it))
+      : item.tags[0];
 
     if (!modules || modules.length === 0 || modules.includes(moduleName)) {
       if (!result[moduleName]) {
@@ -143,7 +146,7 @@ export async function transform(
     if (def.description) commentsParams["description"] = def.description;
     const comments = createComments(commentsParams);
 
-    let baseKey = formatBaseTypeKey(key);
+    const baseKey = formatBaseTypeKey(key);
 
     baseTypes += `${comments}export type ${baseKey} = ${parseResult.codes}`;
   }
@@ -334,59 +337,55 @@ const typeCache: any[] = [];
 
 function formatBaseTypeKey(key: string) {
   let res = key;
-  const invalidMark = [
-    "（",
-    "）",
-    "，",
-    "=",
-    "(",
-    ")",
-    ",",
-    "#/components/schemas/",
-    "#/definitions/",
-    "`",
-    " ",
-    "[",
-    "]",
-  ];
+  res = res
+    .replace("#/components/schemas/", "")
+    .replace("#/definitions/", "")
+    .replace("`", "");
+  const origin = res;
 
-  invalidMark.forEach((it) => {
-    res = replaceAll(it, "", res);
-  });
-
-  res = res.replace(/«/g, "").replace(/»/g, "").replace(/\./g, "a");
-
-  if (typeMap[res]) return typeMap[res];
-
-  let re = "";
-
-  if (res.length > 20) {
-    re = res.slice(res.length - 20);
-    if (re && !typeCache.includes(re)) {
-      typeCache.push(re);
-    } else {
-      re = re + "1";
-      while (typeCache.includes(re)) {
-        re = re + "1";
-      }
-      typeCache.push(re);
-    }
-    typeMap[res] = re;
-  } else {
-    re = res;
-    while (typeCache.includes(re)) {
-      re = re + "1";
-    }
-    typeCache.push(re);
-    typeMap[res] = re;
+  /** 服务端范型类转换成统一的名称，后续作重复处理 */
+  if (res.includes("«")) {
+    res = res.split("«")[0] || "";
   }
 
-  return re;
-}
+  if (res.includes("[[")) {
+    res = res.split("[[")[0] || "";
+  }
 
-function replaceAll(find, replace, str) {
-  const find_ = find.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
-  return str.replace(new RegExp(find_, "g"), replace);
+  if (res.includes("<")) {
+    res = res.split("<<")[0] || "";
+  }
+
+  if (res.includes("（")) {
+    res = res.split("（")[0] || "";
+  }
+
+  if (res.includes("(")) {
+    res = res.split("(")[0] || "";
+  }
+
+  /** 引用过长的时候只取后续两位 */
+  if (res.includes(".")) {
+    const arr: string[] = res.split(".");
+    const arrLen = arr.length;
+    if (arr && arrLen >= 2 && arr[arrLen - 1] && arr[arrLen - 2]) {
+      // @ts-ignore
+      res = arr[arrLen - 1] + wordFirstBig(arr[arrLen - 2]);
+    }
+  }
+  res = res.replace(/\s/g, "");
+  res = pinyin(res, { toneType: "none" });
+  res = res.replace(/\s/g, "");
+
+  if (typeMap[origin]) return typeMap[origin];
+
+  while (typeCache.includes(res)) {
+    res = resetRepeatName(res);
+  }
+  typeCache.push(res);
+  typeMap[origin] = res;
+
+  return res;
 }
 
 function createComments(params?: Record<string, any>) {
@@ -405,11 +404,14 @@ function createComments(params?: Record<string, any>) {
   return res;
 }
 
-console.info(
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  transform(require("../../demo.json"), "./a", undefined)
-);
+function resetRepeatName(name) {
+  if (/[0-9]{1,4}$/g.test(name)) {
+    let words = name.replace(/[0-9]{1,4}$/g, "");
+    let num = name.match(/[0-9]{1,4}$/g)[0] || 0;
 
-setTimeout(() => {
-  console.info(typeMap, "typeMap");
-});
+    num = Number(num) + 1;
+    return `${words}${num}`;
+  } else {
+    return `${name}0`;
+  }
+}
