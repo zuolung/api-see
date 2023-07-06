@@ -3,35 +3,25 @@ import path_ from "path";
 import fs from "fs";
 import * as ora from "ora";
 import glob from "glob";
-import * as prettier from "prettier";
 import { watch } from "chokidar";
 import parser from "./parser.js";
 import log from "./log.js";
-import getConfig from "./config/getConfig.js";
-import { createDefaultModel } from "./create-action/create.js";
-import { getPrettierConfig } from "./config/getPrettierConfig.js";
 
 const spinner = ora.default();
 const CWD = process.cwd();
 const API_UI_DATA_PATH = path_.join(CWD, "./.cache/api-ui-data.json");
-const apiConfig = getConfig();
-const { requestImport, requestFnName, dirPath } = apiConfig?.action || {};
 let result = {};
 
 if (fs.existsSync(API_UI_DATA_PATH)) {
   result = require(API_UI_DATA_PATH);
 }
 
-export function workFile(targetUrl: string, action: boolean) {
+export function workFile(targetUrl: string) {
   const globPaths = [`${targetUrl}/*.ts`, `${targetUrl}/**/*.ts`];
-  const writeActionTarget = path_.resolve(targetUrl, dirPath || "../");
-  if (!fs.existsSync(writeActionTarget)) {
-    fs.mkdirSync(writeActionTarget);
-  }
 
   return new Promise((resolve) => {
     globMax(globPaths, async (paths: string[]) => {
-      await workUnit(paths, action, writeActionTarget);
+      await workUnit(paths);
 
       if (!fs.existsSync(path_.join(CWD, "./.cache"))) {
         await fs.mkdirSync(path_.join(CWD, "./.cache"));
@@ -55,20 +45,19 @@ type Iprops = {
 };
 
 export default async function file(props: Iprops) {
-  const { path = "src/actions/types", watch = false, action = false } = props;
+  const { path = "src/actions/types", watch = false } = props;
   const targetUrl = path_.join(CWD, path);
-  await workFile(targetUrl, action);
+  await workFile(targetUrl);
   if (watch) {
     console.info(`开启监听请求字段ts文件`);
 
-    watchAction(targetUrl, action, workFile);
+    watchAction(targetUrl, workFile);
   }
 }
 
 function watchAction(
   targetUrl: string,
-  action: boolean,
-  work: (p: string, action: boolean) => void
+  work: (p: string) => void
 ) {
   let readyOk = false;
   const watcher = watch(targetUrl, {
@@ -82,68 +71,34 @@ function watchAction(
       log.tips(`
     新增文件${p}`)
     );
-    if (readyOk) work(targetUrl, action);
+    if (readyOk) work(targetUrl);
   });
   watcher.on("change", function (p) {
     console.info(
       log.tips(`
     文件变更${p}`)
     );
-    if (readyOk) work(targetUrl, action);
+    if (readyOk) work(targetUrl);
   });
   watcher.on("unlink", function () {
-    if (readyOk) work(targetUrl, action);
+    if (readyOk) work(targetUrl);
   });
 }
 
-function workUnit(paths: string[], action: boolean, writeActionTarget: string) {
+function workUnit(paths: string[]) {
   return new Promise(async (resolve) => {
     for (let i = 0; i < paths.length; i++) {
       const p = paths[i];
       if (p) {
         const fileCode = fs.readFileSync(p, "utf-8");
-        const apiTypeComments = getApiTypeComments(fileCode);
+        const allUrls = getAllUrls(fileCode);
         const parseRes = parser(p);
         const fileArr = p.split("/");
         const fileName = fileArr[fileArr.length - 1]?.replace(".ts", "");
         if (parseRes && fileName) {
           const def = parseRes.definitions;
           result[fileName] = def;
-          if (action) {
-            let content = "";
-
-            if (!apiConfig?.action?.createDefaultModel) {
-              content = createDefaultModel({
-                data: def,
-                fileName: fileName,
-                requestImport,
-                requestFnName,
-              });
-            } else {
-              content = apiConfig?.action?.createDefaultModel({
-                data: def,
-                fileName: fileName,
-                requestImport,
-                requestFnName,
-              });
-            }
-
-            const prettierConfig = await getPrettierConfig();
-
-            const formatContent = prettier.format(
-              `${apiTypeComments}
-                ${content}`,
-              {
-                ...prettierConfig,
-                parser: "typescript",
-              }
-            );
-
-            fs.writeFileSync(
-              path_.resolve(writeActionTarget, `${fileName}.ts`),
-              formatContent
-            );
-          }
+          result[`${fileName}_Inner_Url`] = allUrls;
         }
 
         spinner.info(log.tips(`解析接口模块: ${p}`));
@@ -182,21 +137,23 @@ async function globSync(file): Promise<string[]> {
   });
 }
 
-function getApiTypeComments(codeStr: string) {
-  const commentsMatch = codeStr.match(/\/\*\*[\w\W]{4,100}\*\//);
-  let comments = "/** @type front */";
-  if (commentsMatch) {
-    const commentsStr = commentsMatch[0];
-    const comm: Record<string, any> = parseComments(commentsStr);
-    if (comm["type"]?.includes("swagger")) {
-      comments = "/** @type from swagger */";
+function getAllUrls(code) {
+  const regex = /\/\*\*(?:[\s\S]*?)\*\//g;
+  const matches = code.match(regex);
+  const comments = matches ? matches.map(match => match.trim()) : [];
+  const commentUrls= []
+  comments.map(item => {
+    const res = parseComments(item)
+    if (res.url) {
+      commentUrls.push(res.url)
     }
-  }
+  })
 
-  return comments;
+  return commentUrls
 }
 
-function parseComments(comments = "") {
+
+function parseComments(comments = ""): any {
   const res = {};
   if (comments && comments.includes("\n")) {
     const arr = comments

@@ -40,7 +40,7 @@
     //   "@/*": ["./src/*"]
     // }
   },
-  "include": ["src/**/*", "types"],
+  "include": ["src/**/*", "types", "antm.config.ts"],
   "exclude": ["./tsconfig.json"],
   "compileOnSave": false
 }

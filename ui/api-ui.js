@@ -5,26 +5,30 @@ import React, {
   useEffect,
 } from "react";
 import ReactJson from "react-json-view";
-import deepMerge from "deepmerge";
 
 export function ApiUi(props) {
   const { apiData, title, mockPort = 10099 } = props;
   const data = {};
+  const dataAll = {};
 
   Object.keys(apiData).map((key) => {
     data[key] = {};
+    dataAll[key] = {};
     for (const kk in apiData[key]) {
       const item = apiData[key][kk];
-      if (item.url && item.description) {
+      const showUrls = apiData[`${key}_Inner_Url`];
+      if (item.url && item.description && showUrls.includes(item.url)) {
         data[key][kk] = item;
       }
+      dataAll[key][kk] =  item
     }
   });
-  const apiModuleNames = Object.keys(data);
+  const apiModuleNames = Object.keys(data).filter(k => !k.includes('_Inner_Url') && !k.includes('BASE-'));
   const [active, setActive] = useState([0, 0]);
   const [urls, setUrls] = useState([]);
   const [api, setApi] = useState();
   const [hash, setHash] = useState("");
+  const [moduleData, setmoduleData] = useState([])
 
   const hashChange = () => {
     const hash_ = window.location.hash.replace("#/", "");
@@ -49,6 +53,7 @@ export function ApiUi(props) {
     const urls_ = [];
     if (apiModuleKey) {
       const moduleData = filterNotNull(data[apiModuleKey]);
+      setmoduleData(dataAll[apiModuleKey])
       Object.keys(moduleData).forEach((key, index) => {
         if (index === active[1]) {
           setApi(moduleData[key]);
@@ -80,15 +85,7 @@ export function ApiUi(props) {
     <div className="api-ui-container">
       <div className="api-ui-header">
         <div className="header-l">
-          <span className="logo-title">{title || `api-see`}</span>
-        </div>
-        <div
-          className="goReadme"
-          onClick={() => {
-            window.open("https://www.npmjs.com/package/api-see");
-          }}
-        >
-          查看文档
+          <span className="logo-title">{title || `api`}</span>
         </div>
       </div>
       <div className="mudules-header">
@@ -153,7 +150,7 @@ export function ApiUi(props) {
                   indentWidth={6}
                   displayObjectSize={false}
                   enableClipboard={false}
-                  src={api ? transformData(api.properties.request) : ""}
+                  src={api ? transformData(api.properties.request, null, moduleData) : ""}
                 />
               </div>
 
@@ -164,7 +161,7 @@ export function ApiUi(props) {
                   indentWidth={6}
                   displayObjectSize={false}
                   enableClipboard={false}
-                  src={api ? transformData(api.properties.response) : ""}
+                  src={api ? transformData(api.properties.response, null, moduleData) : ""}
                 />
               </div>
             </>
@@ -175,7 +172,7 @@ export function ApiUi(props) {
   );
 }
 
-function transformData(data, target) {
+function transformData(data, target, moduleData) {
   if (!data) return;
   if (data.type === "object") {
     let result = target || {};
@@ -194,7 +191,7 @@ function transformData(data, target) {
         } else {
           result[key__] = {};
         }
-        result[key__] = transformData(item, result[key__]);
+        result[key__] = transformData(item, result[key__], moduleData);
       }
     }
 
@@ -202,18 +199,24 @@ function transformData(data, target) {
   } else if (data.type === "array") {
     if (data.items.type === "object") {
       let arr = [{}];
-      transformData(data.items, arr[0]);
+      transformData(data.items, arr[0], moduleData);
       return arr;
     } else {
       return [data.items.type];
     }
   } else if (data["allOf"] && Array.isArray(data["allOf"])) {
-    // 解决`&`运算类型数据
-    let handleData = {};
-    data["allOf"].reverse().map((item) => {
-      handleData = deepMerge(handleData, item);
-    });
-    return transformData(handleData, target);
+
+    for (let i = 0; i<data['allOf'].length; i++) {
+      const item = data['allOf'][i]
+      if (!item.type) {
+        transformData(item, target, moduleData)
+      } else {
+        return transformData(item, target, moduleData)
+      }
+    }
+  } else if (data['$ref']) {
+
+    return transformData(moduleData[data['$ref'].replace('#/definitions/', '')], target, moduleData);
   }
 }
 

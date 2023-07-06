@@ -30,7 +30,9 @@
     "_real": "npx tsc -p tsconfig.json && yarn babel",
     "watch": "npx tsc -p tsconfig.json -w",
     "babel": "npx babel ui/api-ui.js --out-file ui/lib.js",
-    "release": "npx release-it"
+    "release": "npx release-it",
+    "docs": "npx antm-doc-start",
+    "docs:release": "npx antm-doc-build && npx gh-pages -d doc_build"
   },
   "author": "zuolong",
   "license": "MIT",
@@ -48,7 +50,6 @@
     "commander": "^9.3.0",
     "core-js": "3",
     "css-loader": "^6.7.1",
-    "deepmerge": "^4.2.2",
     "html-webpack-plugin": "^5.5.0",
     "js-yaml": "^4.1.0",
     "less": "^4.1.3",
@@ -63,11 +64,15 @@
     "prettier": "^2.7.1",
     "react-json-view": "^1.21.0",
     "release-it": "^15.2.0",
+    "style-resources-loader": "^1.5.0",
+    "swc-loader": "^0.2.3",
     "typescript-json-schema": "^0.54.0",
     "webpack": "^5.73.0",
     "webpack-dev-server": "^4.9.3"
   },
   "devDependencies": {
+    "@antmjs/doc": "^2.3.18",
+    "@antmjs/types": "^2.3.18",
     "@types/mockjs": "^1.0.6",
     "react": "^17.0.2",
     "react-dom": "^17.0.2"

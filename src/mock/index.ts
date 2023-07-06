@@ -3,7 +3,6 @@ import http from "http";
 import * as prettier from "prettier";
 import { mock } from "mockjs";
 import log from "../log.js";
-import deepMerge from "deepmerge";
 import getConfig from "../config/getConfig.js";
 import path from "path";
 import * as ora from "ora";
@@ -35,6 +34,7 @@ export default function main() {
         timeout: it.timeout,
         result: it?.properties?.response || {},
         params: it?.properties?.request || {},
+        allTypes: it
       });
     }
   }
@@ -59,7 +59,7 @@ export default function main() {
 
     mockData.forEach((item) => {
       if (reqUrl === item.url && item.url) {
-        const mockResult = transformMock(item.result, null, item.url);
+        const mockResult = transformMock(item.result, null, item.url, item.allTypes);
         let mockData = mock(mockResult);
         mockData = prettier.format(JSON.stringify(mockData), {
           semi: false,
@@ -85,7 +85,9 @@ export default function main() {
   function transformMock(
     data: Record<string, any>,
     target?: Record<string, any>,
-    url?: string
+    url?: string,
+    // @ts-ignore
+    allTypes: any
   ): any {
     if (!data) return;
     if (data["type"] === "object") {
@@ -184,7 +186,7 @@ export default function main() {
           } else {
             result[key] = {};
           }
-          result[key_] = transformMock(item, result[key_], url);
+          result[key_] = transformMock(item, result[key_], url, allTypes);
         }
       }
 
@@ -192,7 +194,7 @@ export default function main() {
     } else if (data["type"] === "array") {
       if (data["items"].type === "object") {
         const arr = [{}];
-        transformMock(data["items"], arr[0], url);
+        transformMock(data["items"], arr[0], url, allTypes);
         return arr;
       } else {
         let value__;
@@ -208,13 +210,36 @@ export default function main() {
         return value__ || [data["items"].type];
       }
     } else if (data["allOf"] && Array.isArray(data["allOf"])) {
-      // 解决`&`运算类型数据
-      let handleData = {};
-      data["allOf"].reverse().map((item) => {
-        handleData = deepMerge(handleData, item);
-      });
-      return transformMock(handleData, target, url);
-    }
+      let res = ''
+      for (let i = 0; i<data['allOf'].length; i++) {
+        const item = data['allOf'][i]
+        if (!item.type) {
+          res += transformMock(item, target, url, allTypes)
+        } else {
+          res +=  transformMock(item, target, url, allTypes)
+        }
+      }
+
+      return res
+    } else if (data['$ref']) {
+  
+        return transformMock(allTypes[data['$ref'].replace('#/definitions/', '')], target, url, allTypes);
+      }
+
+    // else if (data["allOf"] && Array.isArray(data["allOf"])) {
+
+    //   for (let i = 0; i<data['allOf'].length; i++) {
+    //     const item = data['allOf'][i]
+    //     if (!item.type) {
+    //       transformData(item, target, moduleData)
+    //     } else {
+    //       return transformData(item, target, moduleData)
+    //     }
+    //   }
+    // } else if (data['$ref']) {
+  
+    //   return transformData(moduleData[data['$ref'].replace('#/definitions/', '')], target, moduleData);
+    // }
   }
 }
 
