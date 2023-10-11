@@ -267,6 +267,9 @@
   display: block;
   left: 50px;
 }
+.antm-docs-header-title {
+  font-size: 17px;
+}
 
 /* stylelint-disable selector-max-type */
 /* stylelint-disable no-descending-specificity */
@@ -489,6 +492,9 @@
   display: block;
   left: 50px;
 }
+.antm-docs-header-title {
+  font-size: 17px;
+}
 
 :root {
   --public-font-family: open sans, -apple-system, blinkmacsystemfont,
@@ -527,6 +533,9 @@
   z-index: 999;
   display: block;
   left: 50px;
+}
+.antm-docs-header-title {
+  font-size: 17px;
 }
 
 /* stylelint-disable keyframes-name-pattern */
@@ -733,6 +742,9 @@
   display: block;
   left: 50px;
 }
+.antm-docs-header-title {
+  font-size: 17px;
+}
 
 /* stylelint-disable selector-max-type */
 :root {
@@ -882,6 +894,9 @@
   display: block;
   left: 50px;
 }
+.antm-docs-header-title {
+  font-size: 17px;
+}
 
 :root {
   --public-font-family: open sans, -apple-system, blinkmacsystemfont,
@@ -954,6 +969,9 @@
   display: block;
   left: 50px;
 }
+.antm-docs-header-title {
+  font-size: 17px;
+}
 
 :root {
   --public-font-family: open sans, -apple-system, blinkmacsystemfont,
@@ -1005,6 +1023,9 @@
   display: block;
   left: 50px;
 }
+.antm-docs-header-title {
+  font-size: 17px;
+}
 
 * {
   box-sizing: border-box;
@@ -1029,5 +1050,8 @@ a {
   z-index: 999;
   display: block;
   left: 50px;
+}
+.antm-docs-header-title {
+  font-size: 17px;
 }
 
