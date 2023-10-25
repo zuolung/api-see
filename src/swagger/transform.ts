@@ -1,43 +1,47 @@
 import pat from "path";
-import { pinyin } from "pinyin-pro";
 import fs from "fs";
 import prettier from "prettier";
+// @ts-ignore
 import * as ora from "ora";
-import log from "../log.js";
-import { getPrettierConfig } from "../config/getPrettierConfig.js";
-import { createTypeFileName } from "./createTypeFileName.js";
-import versionCompatible from "./versionCompatible.js";
+// @ts-ignore
+import { pinyin } from "pinyin-pro";
+import log from "../log";
+import { getPrettierConfig } from "../config/getPrettierConfig";
+import { createTypeFileName } from "./createTypeFileName";
+import versionCompatible from "./versionCompatible";
+import { Iconfig } from "global";
+import { createDefaultModel } from "../create-action/create";
 
-const typeNameCache: string[] = [];
 let prettierConfig = {};
-const DEAULT_RESPONSE = `{
-  /**
-   * @value 200
-   */
-  code: number
-  /**
-   * @value success
-   */
-  success: boolean
-}`;
-const API_TYPE_COMMENTS = `/** @type swagger(标注swagger生成的代码，请确认后修改) */
-`;
 
 export async function transform(
   data: Record<string, any>,
   path: string,
-  modules?: string[]
+  modules?: string[],
+  serviceName?: string,
+  actionConfig?: Iconfig["action"]
 ) {
-  const typesUrl = pat.resolve(process.cwd(), path);
-  const BaseTypesUrl = pat.resolve(typesUrl, "../baseTypes.ts");
+  const outDir = pat.resolve(process.cwd(), path);
+  // 请求swagger服务路径
+  const swaggersDir = pat.resolve(process.cwd(), path, serviceName);
+  // 请求ts类型所在路径
+  const typesUrl = pat.resolve(process.cwd(), path, serviceName, "./types");
+  const BaseTypesUrl = pat.resolve(typesUrl, "./swagger-base.ts");
   const result: any = {};
   const { definitions } = versionCompatible({
     data: data,
   });
   const paths = data["paths"];
 
-  let baseTypes = "";
+  let baseTypes = `  /* eslint-disable camelcase */
+  `;
   prettierConfig = await getPrettierConfig();
+  if (!fs.existsSync(outDir)) {
+    fs.mkdirSync(outDir);
+  }
+  if (!fs.existsSync(swaggersDir)) {
+    fs.mkdirSync(swaggersDir);
+  }
   if (!fs.existsSync(typesUrl)) {
     fs.mkdirSync(typesUrl);
   }
@@ -49,9 +53,10 @@ export async function transform(
   for (const key in paths) {
     const method = Object.keys(paths[key])[0] as string;
     const item = paths[key][method];
-    const moduleName = modules
-      ? item.tags.find((it) => modules.includes(it))
-      : item.tags[0];
+    const moduleName =
+      modules && modules.length
+        ? item.tags.find((it) => modules.includes(it))
+        : item.tags[0];
 
     if (!modules || modules.length === 0 || modules.includes(moduleName)) {
       if (!result[moduleName]) {
@@ -59,6 +64,7 @@ export async function transform(
         result[moduleName].codes = "";
         result[moduleName].dependencies = [];
         result[moduleName].firstUrl = key;
+        result[moduleName].action = {}; // 模块相关请求
       }
 
       let reqCodes = "";
@@ -86,7 +92,7 @@ export async function transform(
         }`;
       }
 
-      if (!reqCodes) reqCodes = "Record<string, any> \n";
+      if (!reqCodes) reqCodes = "undefined \n";
 
       let resCodes = ``;
       const responseItem = versionCompatible({
@@ -109,7 +115,7 @@ export async function transform(
           }
         });
       } else {
-        resCodes = DEAULT_RESPONSE;
+        resCodes = "undefined";
       }
 
       const typeName = getRequestTypeName(key);
@@ -125,54 +131,111 @@ export async function transform(
       response: ${resCodes}
     }
     `;
+
+      // @ts-ignore
+      result[moduleName].action[typeName] = {
+        url: item.url,
+        serviceName: serviceName,
+        description: item.summary,
+        introduce: item.description,
+        parameters:
+          parameters?.["schema"]?.$ref || parameters?.["$ref"] || parameters,
+        response:
+          responseItem?.["schema"]?.$ref || responseItem?.["$ref"] || responseItem,
+        // fileName: fileName,
+        // requestImport,
+        // requestFnName,
+      };
     }
   }
 
   for (const nn in result) {
     const mode = result[nn];
-    const baseImport = `import { ${mode.dependencies.join(
-      ","
-    )} } from "../baseTypes";
+    const baseImport = `
+    /* eslint-disable camelcase */
+    import type { ${mode.dependencies.join(",")} } from "./swagger-base";
       `;
-    await fs.writeFileSync(
-      pat.join(typesUrl, `${createTypeFileName?.(nn)}.ts`),
-      formatTs(`${API_TYPE_COMMENTS}${baseImport}${mode.codes}`)
-    );
-  }
-  /** todo 只生成使用的基础类型 */
-  for (const key in definitions) {
-    const def = definitions[key];
+    const tsPath = pat.join(typesUrl, `${createTypeFileName?.(nn)}.ts`);
+    await fs.writeFileSync(tsPath, formatTs(`${baseImport}${mode.codes}`));
 
-    const parseResult = parseDef(def);
-    const commentsParams = {};
-    if (def.description) commentsParams["description"] = def.description;
-    const comments = createComments(commentsParams);
+    let content = "";
 
-    const baseKey = formatBaseTypeKey(key);
+    if (actionConfig?.createDefaultModel) {
+      content = createDefaultModel(mode.action);
+    } else {
+      content = actionConfig?.createDefaultModel(mode.action);
 
-    baseTypes += `${comments}export type ${baseKey} = ${parseResult.codes}`;
-  }
-  await fs.writeFileSync(BaseTypesUrl, formatTs(baseTypes));
+      const formatContent = formatTs(content);
 
-  console.info(
-    log.success(`
+      let writeActionTarget = pat.join(
+        tsPath,
+        actionConfig.dirPath || "../../actions"
+      );
+
+      if (!fs.existsSync(writeActionTarget)) {
+        fs.mkdirSync(writeActionTarget);
+      }
+
+      fs.writeFileSync(
+        pat.resolve(writeActionTarget, `${nn}.ts`),
+        formatContent
+      );
+    }
+    /** todo 只生成使用的基础类型 */
+    for (const key in definitions) {
+      const def = definitions[key];
+
+      const parseResult = parseDef(def);
+      const commentsParams = {};
+      if (def.description) commentsParams["description"] = def.description;
+      const comments = createComments(commentsParams);
+
+      const baseKey = formatBaseTypeKey(key);
+
+      baseTypes += `${comments}export type ${baseKey} = ${parseResult.codes}`;
+    }
+    await fs.writeFileSync(BaseTypesUrl, formatTs(baseTypes));
+
+    console.info(
+      log.success(`
     👊 swagger数据解析完成
   `)
-  );
+    );
 
-  spinner.stop();
+    spinner.stop();
+  }
+}
+
+function ifNotRequired(key, required, requireArr) {
+  if (required === false) return true;
+  if (requireArr && requireArr.length && !requireArr.includes(key)) return true;
+
+  return false;
 }
 
 function parseDef(def: Record<string, any>, kk?: string) {
   const dependencies: any[] = [];
   const result = workUnit(def, kk);
 
-  function workUnit(data, key?: string, noMark?: boolean) {
+  function workUnit(
+    data,
+    key?: string,
+    noMark?: boolean,
+    requiredArr?: string[]
+  ) {
     if (key && key.includes(".")) return "";
+    // 中文作为字段名的时候，移除无效字符
+    if (key && key.match(/[\u4e00-\u9fa5]/g)) {
+      key = key.replace(/[\.\,\，\.\-\*\\\/]/g, "");
+    }
+    const noRequired = ifNotRequired(key, data.required, requiredArr)
+      ? "?"
+      : "";
+    const ifNull = data?.nullable === true ? " | null" : "";
 
     let res = "";
     if (data.type && isBaseType(data.type)) {
-      const type__ = resetTypeName(data.type);
+      let type__ = resetTypeName(data.type);
       let $value = "";
       const $description = data.description;
       if (key) {
@@ -190,61 +253,96 @@ function parseDef(def: Record<string, any>, kk?: string) {
           }
         }
 
+        // 枚举数据处理
+        if ((type__ === "string" || type__ === "number") && data.enum) {
+          type__ = `(${data.enum
+            .map((item, i) => {
+              if (i !== data.enum.length - 1) {
+                return `"${item}" |`;
+              } else {
+                return `"${item}"`;
+              }
+            })
+            .join("")})`;
+        }
+
         const commentsParams: Record<string, any> = {};
         if ($value) commentsParams["value"] = $value;
         if ($description) commentsParams["description"] = $description;
 
         const comments = createComments(commentsParams);
 
-        return `${comments}${key}${
-          data.required === false ? "?" : ""
-        }:${type__}${noMark ? "" : " \n"}`;
+        return `${comments}${key}${noRequired}:${type__}${ifNull}${
+          noMark ? "" : " \n"
+        }`;
       } else return type__;
     } else if (data.type === "object" || data.schema?.type === "object") {
       const properties = data.properties || data.schema?.properties;
+      const curRequiredArr =
+        data.required && Array.isArray(data.required) ? data.required : [];
+
       if (!properties) {
-        if (key) {
-          res = `${key}:{}${noMark ? "" : "\n"}`;
+        if (
+          !data.additionalProperties ||
+          JSON.stringify(data.additionalProperties) === "{}"
+        ) {
+          if (key) {
+            res = `${key}${noRequired}:{}${noMark ? "" : "\n"}`;
+          } else {
+            res = `{}${noMark ? "" : "\n"}`;
+          }
         } else {
-          res = `{}${noMark ? "" : "\n"}`;
+          const nextWork = workUnit(
+            data.additionalProperties,
+            undefined,
+            undefined,
+            curRequiredArr
+          );
+          if (key) {
+            res = `${key}${noRequired}:Record<string, ${nextWork || "null"}>${
+              noMark ? "" : "\n"
+            }`;
+          } else {
+            res = `Record<string, ${nextWork}>${noMark ? "" : "\n"}`;
+          }
         }
       } else {
         if (!key) res += `{ \n `;
 
         for (const kk in properties) {
           const item = properties[kk];
-          res += workUnit(item, kk);
+          res += workUnit(item, kk, undefined, curRequiredArr);
         }
 
         if (!key) res += `} ${noMark ? "" : "\n"}`;
       }
     } else if (data.type === "array" || data.schema?.type === "array") {
-      const type__ = data.type || data.schema?.type;
-      const items__ = data.items || data.schema?.items;
+      const type__ = data.type || data.schema?.type || {};
+      const items__ = data.items || data.schema?.items || {};
       if (Object.keys(items__).length === 0) {
-        res += `${key}:any[] ${noMark ? "" : "\n"}  `;
+        res += `${key}${noRequired}:any[] ${noMark ? "" : "\n"}  `;
       } else {
         if (type__ && isBaseType(type__)) {
           res += workUnit(
             {
               ...items__,
-              required: data.required,
               description: data.description,
             },
             key,
-            true
+            true,
+            requiredArr
           );
         } else if (items__ && !isBaseType(type__)) {
           if (items__.properties) res += `{ \n `;
           res += workUnit(
             {
               ...items__,
-              required: data.required,
               description: data.description,
               rule: 2,
             },
             key,
-            true
+            true,
+            requiredArr
           );
           if (items__.properties) res += `} ${noMark ? "" : "\n"}`;
         } else if (data.items?.$ref) {
@@ -252,33 +350,33 @@ function parseDef(def: Record<string, any>, kk?: string) {
           dependencies.push($ref);
           res += workUnit({ type: $ref }, key, true);
         }
-        res += `[] ${noMark ? "" : "\n"} `;
+        res += `[] ${ifNull} ${noMark ? "" : "\n"} `;
       }
-    } else if (data.$ref) {
+    } else if (data.schema?.$ref || data.$ref) {
       const commentsParams: Record<string, any> = {};
       if (data.rule) commentsParams["value"] = data.rule;
       if (data.description) commentsParams["description"] = data.description;
 
       const comments = createComments(commentsParams);
 
-      const $ref = formatBaseTypeKey(data.$ref);
+      let $ref = formatBaseTypeKey(data.schema?.$ref || data?.$ref);
+      if ($ref === "List") {
+        $ref = "any[]";
+      }
+      if ($ref === "Map") {
+        $ref = "Record<string, any>";
+      }
+      if ($ref === "Set") {
+        $ref = "any[]";
+      }
       dependencies.push($ref);
-      return `${
-        key ? `${comments}${key}${data.required === false ? "?" : ""}:` : ""
-      }${$ref}${noMark ? "" : " \n "}`;
-    } else if (data.schema?.$ref) {
-      const commentsParams: Record<string, any> = {};
-      if (data.rule) commentsParams["value"] = data.rule;
-      if (data.description) commentsParams["description"] = data.description;
-
-      const comments = createComments(commentsParams);
-
-      const $ref = formatBaseTypeKey(data.schema?.$ref);
-      dependencies.push($ref);
-      return `${
-        key ? comments + key + `:${data.required === false ? "?" : ""}` : ""
-      }${$ref}${noMark ? "" : " \n "}`;
+      return `${key ? `${comments}${key}${noRequired}:` : ""}${$ref}${ifNull}${
+        noMark ? "" : " \n "
+      }`;
+    } else if (data.schema) {
+      return workUnit(data.schema, key, true);
     }
+
     return res;
   }
 
@@ -300,6 +398,9 @@ function resetTypeName(type) {
 }
 
 function formatTs(str) {
+  // 空对象处理
+  str = str?.replace(/\{\}/g, "Record<string, any>");
+
   // eslint-disable-next-line import/no-named-as-default-member
   return prettier.format(str, {
     ...prettierConfig,
@@ -307,85 +408,49 @@ function formatTs(str) {
   });
 }
 
-function getRequestTypeName(url: string) {
+function getRequestTypeName(url) {
   const arrUrl = url.split("/").map((item) => {
     // 防止使用 a/${xxId}/abc
     return item.replace("{", "").replace("}", "");
   });
 
   if (arrUrl.length > 1) {
-    let u = `${arrUrl[arrUrl.length - 2]}${wordFirstBig(
-      arrUrl[arrUrl.length - 1] || ""
-    )}`;
+    let n = "";
+    for (let i = 0; i <= arrUrl.length; i++) {
+      if (arrUrl[i]) {
+        n += wordFirstBig(arrUrl[i]);
+      }
+    }
+    n = n.replace(/\-/g, "").replace(/\./g, "");
 
-    u = typeNameCache.includes(u) ? u + `1` : u;
-    u = u.replace(/\-/g, "").replace(/\./g, "");
-
-    typeNameCache.push(u);
-
-    return u;
+    return n;
   } else {
-    return arrUrl[arrUrl.length - 1];
+    return arrUrl[0];
   }
 }
 
-function wordFirstBig(str: string) {
+export function wordFirstBig(str: string) {
   return str.substring(0, 1).toLocaleUpperCase() + str.substring(1);
 }
 
-/** 解决类型名称太长 */
-const typeMap: Record<string, any> = {};
-const typeCache: any[] = [];
-
-function formatBaseTypeKey(key: string) {
+function formatBaseTypeKey(key) {
   let res = key;
   res = res
     .replace("#/components/schemas/", "")
     .replace("#/definitions/", "")
-    .replace("`", "");
-  const origin = res;
+    .replace(/\`/g, "");
 
-  /** 服务端范型类转换成统一的名称，后续作重复处理 */
-  if (res.includes("«")) {
-    res = res.split("«")[0] || "";
-  }
+  res = res
+    .split("«")
+    .filter((it) => !!it)
+    .join("_")
+    .split("»")
+    .filter((it) => !!it)
+    .join("_");
 
-  if (res.includes("[[")) {
-    res = res.split("[[")[0] || "";
-  }
-
-  if (res.includes("<")) {
-    res = res.split("<<")[0] || "";
-  }
-
-  if (res.includes("（")) {
-    res = res.split("（")[0] || "";
-  }
-
-  if (res.includes("(")) {
-    res = res.split("(")[0] || "";
-  }
-
-  /** 引用过长的时候只取后续两位 */
-  if (res.includes(".")) {
-    const arr: string[] = res.split(".");
-    const arrLen = arr.length;
-    if (arr && arrLen >= 2 && arr[arrLen - 1] && arr[arrLen - 2]) {
-      // @ts-ignore
-      res = arr[arrLen - 1] + wordFirstBig(arr[arrLen - 2]);
-    }
-  }
-  res = res.replace(/\s/g, "");
+  res = res.replace(/[^\u4e00-\u9fa5_a-zA-Z]/g, "");
   res = pinyin(res, { toneType: "none" });
   res = res.replace(/\s/g, "");
-
-  if (typeMap[origin]) return typeMap[origin];
-
-  while (typeCache.includes(res)) {
-    res = resetRepeatName(res);
-  }
-  typeCache.push(res);
-  typeMap[origin] = res;
 
   return res;
 }
@@ -404,16 +469,4 @@ function createComments(params?: Record<string, any>) {
   }
 
   return res;
-}
-
-function resetRepeatName(name) {
-  if (/[0-9]{1,4}$/g.test(name)) {
-    let words = name.replace(/[0-9]{1,4}$/g, "");
-    let num = name.match(/[0-9]{1,4}$/g)[0] || 0;
-
-    num = Number(num) + 1;
-    return `${words}${num}`;
-  } else {
-    return `${name}0`;
-  }
 }

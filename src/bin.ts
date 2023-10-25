@@ -40,6 +40,7 @@ program
   .option("-u, --url <url>", "the url of swagger data")
   .option("-mod, --modules <modules>", "swagger tag item split with comma")
   .option("-a, --action <action>", "if create request method")
+  .option("-ser, --service-name <serviceName>", "swagger service name")
   .action(swagger);
 
 program.parse(process.argv);

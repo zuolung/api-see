@@ -1,5 +1,6 @@
 import YAML from "js-yaml";
 import fetch from "node-fetch";
+import * as JSON_ from 'jsonc-parser'
 
 export function fetchData(url: string) {
   return new Promise((resolve) => {
@@ -15,6 +16,6 @@ export function fetchData(url: string) {
 function parseFileContents(contents: string, path: string): object {
   const res = /.ya?ml$/i.test(path)
     ? YAML.load(contents)
-    : JSON.parse(contents);
+    : JSON_.parse(contents);
   return res;
 }

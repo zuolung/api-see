@@ -15,7 +15,7 @@ export function createDefaultModel({
     if (key !== "Record<string,any>" && item.url && item.description) {
       packages.push(key);
       requestActionsStr += `
-      // ${item.description}
+      /* ${item.description} **/
       export const ${key}${requestSuffix} = ${requestFnName}<${key}['request'], ${key}['response']>('${item.url}', '${item.method}');
       `;
     }
