@@ -33,6 +33,8 @@ export async function transform(
   });
   const paths = data["paths"];
 
+  fs.writeFileSync(pat.join(process.cwd(), 'a.json'), JSON.stringify(definitions))
+
   let baseTypes = `  /* eslint-disable camelcase */
   `;
   prettierConfig = await getPrettierConfig();
@@ -122,7 +124,7 @@ export async function transform(
       result[moduleName].codes += `
     /**
      * ${item.summary || "--"}
-     * @url ${key}
+     * @url ${key}·
      * @method ${method}
      * @introduce ${item.description || "--"}
      */
@@ -132,19 +134,22 @@ export async function transform(
     }
     `;
 
+    const defKey = responseItem?.schema.$ref?.replace('#/components/schemas/', '')
+    let hasResponseData = false
+    if (defKey) {
+      const responseData = definitions[defKey]
+      if (responseData.type === 'object' && responseData.properties.data) {
+        hasResponseData = true
+      }
+    }
+
       // @ts-ignore
       result[moduleName].action[typeName] = {
-        url: item.url,
+        url: key,
         serviceName: serviceName,
         description: item.summary,
         introduce: item.description,
-        parameters:
-          parameters?.["schema"]?.$ref || parameters?.["$ref"] || parameters,
-        response:
-          responseItem?.["schema"]?.$ref || responseItem?.["$ref"] || responseItem,
-        // fileName: fileName,
-        // requestImport,
-        // requestFnName,
+        hasResponseData,
       };
     }
   }
@@ -160,27 +165,35 @@ export async function transform(
 
     let content = "";
 
-    if (actionConfig?.createDefaultModel) {
-      content = createDefaultModel(mode.action);
-    } else {
-      content = actionConfig?.createDefaultModel(mode.action);
-
-      const formatContent = formatTs(content);
-
-      let writeActionTarget = pat.join(
-        tsPath,
-        actionConfig.dirPath || "../../actions"
-      );
-
-      if (!fs.existsSync(writeActionTarget)) {
-        fs.mkdirSync(writeActionTarget);
-      }
-
-      fs.writeFileSync(
-        pat.resolve(writeActionTarget, `${nn}.ts`),
-        formatContent
-      );
+    const c = {
+      requestFnName: actionConfig?.requestFnName,
+      fileName: nn,
+      requestSuffix: actionConfig?.requestSuffix,
+      requestImport: actionConfig?.requestImport,
+      data: result[nn].action
     }
+
+    if (!actionConfig?.createDefaultModel) {
+      content = createDefaultModel(c);
+    } else {
+      content = actionConfig?.createDefaultModel(c);
+    }
+
+    const formatContent = formatTs(content);
+
+    let writeActionTarget = pat.join(
+      tsPath,
+      actionConfig?.dirPath || "../../actions"
+    );
+
+    if (!fs.existsSync(writeActionTarget)) {
+      fs.mkdirSync(writeActionTarget);
+    }
+
+    fs.writeFileSync(
+      pat.resolve(writeActionTarget, `${nn}.ts`),
+      formatContent
+    );
     /** todo 只生成使用的基础类型 */
     for (const key in definitions) {
       const def = definitions[key];

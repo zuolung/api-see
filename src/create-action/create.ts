@@ -12,6 +12,8 @@ export function createDefaultModel({
 
   for (const key in data) {
     const item = data[key];
+    console.info(item?.hasResponseData, '~~~~~~~~~~~~~~~~~~~~~~~~')
+
     if (key !== "Record<string,any>" && item.url && item.description) {
       packages.push(key);
       requestActionsStr += `
@@ -27,7 +29,7 @@ export function createDefaultModel({
   /* eslint-disable import/no-cycle */
   // @ts-nocheck
   ${requestImport}
-  import type { ${packagesStr} } from './types/${fileName}';
+  import type { ${packagesStr} } from '../types/${fileName}';
 
   ${requestActionsStr}
   `;

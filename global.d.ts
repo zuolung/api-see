@@ -1,5 +1,3 @@
-import { DefinitionOrBoolean } from "typescript-json-schema";
-
 declare module "glob";
 declare module "ora";
 declare module "*.json" {
@@ -51,22 +49,6 @@ export type Iconfig = {
     /** 请求前缀 */
     requestSuffix?: string;
     /** 自定义请求方法 */
-    // createDefaultModel?: (params: {
-    //   /** 请求类型的ast描述, key是某个接口的名称，由url路径组合而成 */
-    //   data: Record<string, {
-    //     /** 请求路径 */
-    //     url: string
-    //     /** 请求描述 */
-    //     description: string
-    //     /** 请求方法 */
-    //     method: string
-    //     /** 介绍 */
-    //     introduce: string
-    //     /** 服务名称 */
-    //     serviceName?: string
-    //     /** 返回和请求的字段类型描述 */
-    //     properties: {}
-    //   }>;
     createDefaultModel?: (params: {
       /** 请求类型的ast描述, key是某个接口的名称，由url路径组合而成 */
       data: Record<
@@ -82,7 +64,9 @@ export type Iconfig = {
           introduce: string;
           /** 服务名称 */
           serviceName?: string;
-        } & DefinitionOrBoolean
+          /** 响应体是否有data字段 */
+          hasResponseData?: boolean 
+        }
       >;
       fileName: string;
       requestImport?: string;
@@ -97,13 +81,13 @@ export type Iconfig = {
         /** swagger JSON 路径 */
         url: string;
         /** 使用到的模块 */
-        modules: string[];
+        modules?: string[];
         /** 服务名称，可以拼接到请求路径前 */
         serviceName: string;
       }
     | {
         url: string;
-        modules: string[];
+        modules?: string[];
         serviceName: string;
       }[];
 };
