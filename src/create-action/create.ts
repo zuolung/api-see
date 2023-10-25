@@ -12,7 +12,6 @@ export function createDefaultModel({
 
   for (const key in data) {
     const item = data[key];
-    console.info(item?.hasResponseData, '~~~~~~~~~~~~~~~~~~~~~~~~')
 
     if (key !== "Record<string,any>" && item.url && item.description) {
       packages.push(key);

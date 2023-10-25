@@ -8,12 +8,11 @@ type Iprops = {
   url?: string;
   path?: string;
   modules?: string;
-  action?: boolean;
   serviceName?: string
 };
 
 export default async function swagger(props: Iprops) {
-  const { path, modules, action, serviceName, url } = props;
+  const { path, modules, serviceName, url } = props;
   const config = getConfig();
   const path_ = path || config?.path || "src/actions/types";
   let swaggerConfig: WorkProps[] = []

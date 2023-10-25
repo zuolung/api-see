@@ -208,15 +208,15 @@ export async function transform(
       baseTypes += `${comments}export type ${baseKey} = ${parseResult.codes}`;
     }
     await fs.writeFileSync(BaseTypesUrl, formatTs(baseTypes));
-
-    console.info(
-      log.success(`
-    👊 swagger数据解析完成
-  `)
-    );
-
-    spinner.stop();
   }
+
+  console.info(
+    log.success(`
+  👊 swagger数据解析完成
+`)
+  );
+
+  spinner.stop();
 }
 
 function ifNotRequired(key, required, requireArr) {
