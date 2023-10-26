@@ -8,7 +8,7 @@ import { pinyin } from "pinyin-pro";
 import log from "../log";
 import { getPrettierConfig } from "../config/getPrettierConfig";
 import { createTypeFileName } from "./createTypeFileName";
-import versionCompatible from "./versionCompatible";
+import { versionCompatible } from "./versionCompatible";
 import { Iconfig } from "global";
 import { createDefaultModel } from "../create-action/create";
 
@@ -203,18 +203,28 @@ export async function transform(
     );
   }
 
-  /** todo 只生成使用的基础类型 */
+  const allFormatDefKeys = Object.keys(definitions).map(k => formatBaseTypeKey(k))
+
   for (const key in definitions) {
-    const def = definitions[key];
+    const def = definitions[key]
 
-    const parseResult = parseDef(def);
-    const commentsParams = {};
-    if (def.description) commentsParams["description"] = def.description;
-    const comments = createComments(commentsParams);
+    const parseResult = parseDef(def)
+    const commentsParams: any = {}
+    if (def.description) {
+      commentsParams['description'] = def.description
+    } else {
+      commentsParams['description'] = key
+    }
+    const baseKey = formatBaseTypeKey(key)
 
-    const baseKey = formatBaseTypeKey(key);
-
-    baseTypes += `${comments}export type ${baseKey} = ${parseResult.codes}`;
+    const comments = createComments(commentsParams)
+    // 替换基类中没有的引用
+    parseResult.dependencies?.forEach(d => {
+      if (!allFormatDefKeys.includes(d)) {
+        parseResult.codes = parseResult.codes.replace(d, 'any')
+      }
+    })
+    baseTypes += `${comments}export type ${baseKey} = ${parseResult.codes}`
   }
 
   await fs.writeFileSync(BaseTypesUrl, formatTs(baseTypes));

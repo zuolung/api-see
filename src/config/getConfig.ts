@@ -6,7 +6,7 @@ import { register } from '@adonisjs/require-ts'
 
 let ifWarned = false;
 
-const appRoot = join(__dirname,'../../')
+const appRoot = join(__dirname,'../../config')
 
 
 register(appRoot, {})

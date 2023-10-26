@@ -17,11 +17,8 @@
     "noUncheckedIndexedAccess": true,
     /** module */
     "baseUrl": "./",
-    "module": "commonjs",
-    // default: module === AMD or UMD or System or ES6, then Classic otherwise Node
-    "moduleResolution": "Node",
-    "target": "es5",
-    "lib": ["es5"],
+    "module": "ES6",
+    "target": "ES6",
     /** emit */
     "noEmit": false,
     /** Interop Constraints */
@@ -40,7 +37,7 @@
     //   "@/*": ["./src/*"]
     // }
   },
-  "include": ["src/**/*", "types", "./global.d.ts", "*.ts"],
+  "include": ["*.ts", "*.d.ts"],
   "exclude": ["./tsconfig.json"],
   "compileOnSave": false
 }

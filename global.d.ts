@@ -65,7 +65,7 @@ export type Iconfig = {
           /** 服务名称 */
           serviceName?: string;
           /** 响应体是否有data字段 */
-          hasResponseData?: boolean 
+          hasResponseData?: boolean;
         }
       >;
       fileName: string;
@@ -86,8 +86,11 @@ export type Iconfig = {
         serviceName: string;
       }
     | {
+        /** swagger JSON 路径 */
         url: string;
+        /** 使用到的模块 */
         modules?: string[];
+        /** 服务名称，可以拼接到请求路径前 */
         serviceName: string;
       }[];
 };
