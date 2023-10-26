@@ -2,7 +2,7 @@ import { pinyin } from "pinyin-pro";
 
 export function createTypeFileName(swaggerTagName: string) {
   let swaggerTagName_ = swaggerTagName;
-  const regInvalidWords = /[\.\,\，\.\-\*\\\/]/g;
+  const regInvalidWords = /[\.\,\，\.\*\\\/]/g;
   swaggerTagName_ = swaggerTagName_.replace(regInvalidWords, "");
 
   swaggerTagName_ = pinyin(swaggerTagName_, { toneType: "none" });

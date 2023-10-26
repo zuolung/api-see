@@ -33,8 +33,6 @@ export async function transform(
   });
   const paths = data["paths"];
 
-  fs.writeFileSync(pat.join(process.cwd(), 'a.json'), JSON.stringify(definitions))
-
   let baseTypes = `  /* eslint-disable camelcase */
   `;
   prettierConfig = await getPrettierConfig();
@@ -77,8 +75,13 @@ export async function transform(
       }).pathsRequestParams;
 
       for (const km in parameters) {
-        const it = parameters[km];
-        const { codes, dependencies } = parseDef(it, it.name);
+        let it = parameters[km]
+        let name = it.name
+        if (it.in === 'body') {
+          it = it.schema
+          name = ''
+        }
+        const { codes, dependencies } = parseDef(it, name);
         reqCodes += `${codes}`;
 
         dependencies.map((dep) => {
@@ -128,20 +131,23 @@ export async function transform(
      * @method ${method}
      * @introduce ${item.description || "--"}
      */
-    export type I${typeName} = {
+    export type ${typeName} = {
       request: ${reqCodes}
       response: ${resCodes}
     }
     `;
 
-    const defKey = responseItem?.schema.$ref?.replace('#/components/schemas/', '')
-    let hasResponseData = false
-    if (defKey) {
-      const responseData = definitions[defKey]
-      if (responseData.type === 'object' && responseData.properties.data) {
-        hasResponseData = true
+      const defKey = responseItem?.schema?.$ref?.replace(
+        "#/components/schemas/",
+        ""
+      );
+      let hasResponseData = false;
+      if (defKey) {
+        const responseData = definitions[defKey];
+        if (responseData?.type === "object" && responseData?.properties?.data) {
+          hasResponseData = true;
+        }
       }
-    }
 
       // @ts-ignore
       result[moduleName].action[typeName] = {
@@ -149,6 +155,7 @@ export async function transform(
         serviceName: serviceName,
         description: item.summary,
         introduce: item.description,
+        method,
         hasResponseData,
       };
     }
@@ -167,11 +174,11 @@ export async function transform(
 
     const c = {
       requestFnName: actionConfig?.requestFnName,
-      fileName: nn,
+      fileName: createTypeFileName?.(nn),
       requestSuffix: actionConfig?.requestSuffix,
       requestImport: actionConfig?.requestImport,
-      data: result[nn].action
-    }
+      data: result[nn].action,
+    };
 
     if (!actionConfig?.createDefaultModel) {
       content = createDefaultModel(c);
@@ -191,24 +198,26 @@ export async function transform(
     }
 
     fs.writeFileSync(
-      pat.resolve(writeActionTarget, `${nn}.ts`),
+      pat.resolve(writeActionTarget, `${createTypeFileName?.(nn)}.ts`),
       formatContent
     );
-    /** todo 只生成使用的基础类型 */
-    for (const key in definitions) {
-      const def = definitions[key];
-
-      const parseResult = parseDef(def);
-      const commentsParams = {};
-      if (def.description) commentsParams["description"] = def.description;
-      const comments = createComments(commentsParams);
-
-      const baseKey = formatBaseTypeKey(key);
-
-      baseTypes += `${comments}export type ${baseKey} = ${parseResult.codes}`;
-    }
-    await fs.writeFileSync(BaseTypesUrl, formatTs(baseTypes));
   }
+
+  /** todo 只生成使用的基础类型 */
+  for (const key in definitions) {
+    const def = definitions[key];
+
+    const parseResult = parseDef(def);
+    const commentsParams = {};
+    if (def.description) commentsParams["description"] = def.description;
+    const comments = createComments(commentsParams);
+
+    const baseKey = formatBaseTypeKey(key);
+
+    baseTypes += `${comments}export type ${baseKey} = ${parseResult.codes}`;
+  }
+
+  await fs.writeFileSync(BaseTypesUrl, formatTs(baseTypes));
 
   console.info(
     log.success(`
@@ -465,7 +474,7 @@ function formatBaseTypeKey(key) {
   res = pinyin(res, { toneType: "none" });
   res = res.replace(/\s/g, "");
 
-  return res;
+  return wordFirstBig(res);
 }
 
 function createComments(params?: Record<string, any>) {
