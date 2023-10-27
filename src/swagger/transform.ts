@@ -140,7 +140,7 @@ export async function transform(
       const defKey = responseItem?.schema?.$ref?.replace(
         "#/components/schemas/",
         ""
-      );
+      )?.replace("#/definitions/", "");
       let hasResponseData = false;
       if (defKey) {
         const responseData = definitions[defKey];
