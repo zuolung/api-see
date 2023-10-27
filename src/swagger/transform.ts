@@ -153,8 +153,8 @@ export async function transform(
       result[moduleName].action[typeName] = {
         url: key,
         serviceName: serviceName,
-        description: item.summary,
-        introduce: item.description,
+        description: item.summary?.replace(/\*/g, ''),
+        introduce: item.description?.replace(/\*/g, ''),
         method,
         hasResponseData,
       };
@@ -493,7 +493,7 @@ function createComments(params?: Record<string, any>) {
     res += `/**
     `;
     for (const key in params) {
-      res += ` * @${key} ${params[key]}
+      res += ` * @${key} ${(params?.[key] + '')?.replace(/\*/g, '')}
       `;
     }
     res += `*/
