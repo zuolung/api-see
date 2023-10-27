@@ -7,7 +7,6 @@ export function fetchData(url: string) {
     fetch(url)
       .then((resp) => resp.text())
       .then((contents) => {
-        console.info(contents, '>>>????', url)
         contents = contents.replace(/\:\/\//g, '')
         const res = parseFileContents(contents, url);
         resolve(res);
