@@ -71,6 +71,7 @@ modules
   console.info(log.tips(`开始获取 【${serviceName}】 swagger数据`));
 
   const swaggerData: any = await fetchData(url);
+  console.info(swaggerData, '~~~~~~~~~~~~~~~~~~~~~~~~~~')
   const swaggerVersion = swaggerData["swagger"] || swaggerData["openapi"];
   const publicTypes =
     swaggerData["definitions"] || swaggerData["components"]["schemas"];

@@ -14,6 +14,25 @@ import { createDefaultModel } from "../create-action/create";
 
 let prettierConfig = {};
 
+function restfullApiParamsFilter(parameters, method) {
+  const parametersNew = []
+  let filterMap = {
+    'get': 'query',
+    'post': 'body',
+    'put': 'body',
+    'delete': 'body',
+  }
+  let filter = filterMap[method] || 'body'
+  for (const key in parameters) {
+    const item = parameters[key]
+    if (item.in === filter) {
+      parametersNew.push(item)
+    }
+  }
+
+  return parametersNew
+}
+
 export async function transform(
   data: Record<string, any>,
   path: string,
@@ -69,10 +88,13 @@ export async function transform(
 
       let reqCodes = "";
 
-      const parameters: Record<string, any> = versionCompatible({
+      let parameters: Record<string, any> = versionCompatible({
         requestParams: item,
         data: data,
       }).pathsRequestParams;
+
+      parameters = restfullApiParamsFilter(parameters, method)
+
 
       for (const km in parameters) {
         let it = parameters[km]
