@@ -57,7 +57,7 @@ export async function transform(
       modules && modules.length
         ? item.tags.find((it) => modules.includes(it))
         : item.tags[0];
-
+      
     if (!modules || modules.length === 0 || modules.includes(moduleName)) {
       if (!result[moduleName]) {
         result[moduleName] = {};
@@ -194,10 +194,10 @@ export async function transform(
     );
 
     if (!fs.existsSync(writeActionTarget)) {
-      fs.mkdirSync(writeActionTarget);
+      await fs.mkdirSync(writeActionTarget);
     }
 
-    fs.writeFileSync(
+    await fs.writeFileSync(
       pat.resolve(writeActionTarget, `${createTypeFileName?.(nn)}.ts`),
       formatContent
     );
