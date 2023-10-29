@@ -44,6 +44,7 @@ export default async function watch(props: Iprops) {
       watch: [
         path_.join(process.cwd(), "./.cache/api-ui-data.json"),
         path_.join(process.cwd(), "./api.config.js"),
+        path_.join(process.cwd(), "./api.config.ts"),
       ],
     })
       .on("quit", () => {

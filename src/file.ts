@@ -15,7 +15,7 @@ const spinner = ora.default();
 const CWD = process.cwd();
 const API_UI_DATA_PATH = path_.join(CWD, "./.cache/api-ui-data.json");
 const apiConfig = getConfig();
-const { requestImport, requestFnName, dirPath } = apiConfig?.action || {};
+const { dirPath } = apiConfig?.action || {};
 let result = {};
 
 if (fs.existsSync(API_UI_DATA_PATH)) {
@@ -103,23 +103,34 @@ function workUnit(paths: string[], action: boolean) {
           const def = parseRes.definitions;
           result[fileName] = def;
           if (action) {
-            let content = "";
+            const createAction = apiConfig?.action?.createDefaultModel || createDefaultModel
+            const urlData = {}
+            Object.keys(def).map(url => {
+              let hasResponseData = false
+              const item: any = def[url]
+              const responseData = def[url]['properties']['response']
+              if (responseData?.type === "object" && responseData?.properties?.data) {
+                hasResponseData = true;
+              }
 
-            if (!apiConfig?.action?.createDefaultModel) {
-              content = createDefaultModel({
-                data: def,
-                fileName: fileName,
-                requestImport,
-                requestFnName,
-              });
-            } else {
-              content = apiConfig?.action?.createDefaultModel({
-                data: def as any,
-                fileName: fileName,
-                requestImport,
-                requestFnName,
-              });
-            }
+              const queryMatch = url.match(/\{[a-z\-A-Z]+\}/)
+              let queryKey = queryMatch ? queryMatch[0] : ''
+
+              urlData[url] = {
+                url: item.url,
+                serviceName: item.serviceName,
+                description: item.summary?.replace(/\*/g, ''),
+                introduce: item.description?.replace(/\*/g, ''),
+                method: item.method,
+                hasResponseData,
+                hasRequestQuery: !!queryKey,
+                queryKey,
+              }
+            })
+            const content = createAction({
+              fileName,
+              data: urlData
+            })
 
             const prettierConfig = await getPrettierConfig();
 

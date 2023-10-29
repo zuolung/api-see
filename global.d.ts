@@ -66,31 +66,26 @@ export type Iconfig = {
           serviceName?: string;
           /** 响应体是否有data字段 */
           hasResponseData?: boolean;
+          /** 请求方式是否有query */
+          hasRequestQuery: boolean,
+          /** query字段，如：{id} */
+          queryKey?: string,
         }
       >;
       fileName: string;
-      requestImport?: string;
-      requestFnName?: string;
-      serviceName?: string;
-      requestSuffix?: string;
     }) => string;
   };
   /** swagger生成请求字段类型 */
-  swagger?:
-    | {
-        /** swagger JSON 路径 */
-        url: string;
-        /** 使用到的模块 */
-        modules?: string[];
-        /** 服务名称，可以拼接到请求路径前 */
-        serviceName: string;
-      }
-    | {
-        /** swagger JSON 路径 */
-        url: string;
-        /** 使用到的模块 */
-        modules?: string[];
-        /** 服务名称，可以拼接到请求路径前 */
-        serviceName: string;
-      }[];
+  swagger?: {
+    /** 所有服务对应ts类型和请求的最外层文件夹, 默认为src/actions */
+    dir?: string
+    services: {
+      /** swagger JSON 路径 */
+      url: string;
+      /** 使用到的模块 */
+      modules?: string[];
+      /** 服务名称，可以拼接到请求路径前 */
+      serviceName: string;
+    }[];
+  }
 };

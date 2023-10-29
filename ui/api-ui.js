@@ -26,6 +26,8 @@ export function ApiUi(props) {
   const [api, setApi] = useState();
   const [hash, setHash] = useState("");
 
+  console.info(api)
+
   const hashChange = () => {
     const hash_ = window.location.hash.replace("#/", "");
     setHash(hash_);
@@ -181,11 +183,15 @@ function transformData(data, target) {
     let result = target || {};
     for (const key in data.properties) {
       const item = data.properties[key];
-      if (["number", "string", "boolean"].includes(item.type)) {
+      if (Array.isArray(item.type)) {
+        result[key] = `${getEnumType(item.type) + ','}${
+          data.required && data.required.includes(key) ? "(必填)" : "(非必填)"
+        }${item.description ? `【${item.description}】` : ""}`;
+      } else if (["number", "string", "boolean"].includes(item.type)) {
         result[key] = `${item.type}${
           data.required && data.required.includes(key) ? "(必填)" : "(非必填)"
         }${item.description ? `【${item.description}】` : ""}`;
-      } else {
+      } else if(['array', 'object'].includes(item.type)){
         let key__ = `${key} ${
           data.required && data.required.includes(key) ? "(必填)" : "(非必填)"
         }${item.description ? `【${item.description}】` : ""}`;
@@ -195,7 +201,7 @@ function transformData(data, target) {
           result[key__] = {};
         }
         result[key__] = transformData(item, result[key__]);
-      }
+      } 
     }
 
     return result;
@@ -227,4 +233,20 @@ function filterNotNull(data) {
   }
 
   return res;
+}
+
+function getEnumType(arr) {
+  let res = []
+  arr.map(item => {
+    if (typeof item  === 'string') {
+      res.push(item)
+    } else if (item?.type === 'array' && item.items?.$ref) {
+      res.push(item.items?.$ref?.replace('#/definitions', '') + '[]')
+    } else if (item?.type === 'object' && item.items?.$ref) {
+      res.push(item.items?.$ref?.replace('#/definitions', ''))
+
+    }
+  })
+
+  return res.join(` | `)
 }

@@ -5,34 +5,14 @@ import { fetchData } from "./fetch.js";
 import { Iconfig } from "global.js";
 
 type Iprops = {
-  url?: string;
-  path?: string;
-  modules?: string;
-  serviceName?: string
+  dir?: string;
 };
 
 export default async function swagger(props: Iprops) {
-  const { path, modules, serviceName, url } = props;
+  const { dir } = props;
   const config = getConfig();
-  const path_ = path || config?.path || "src/actions/types";
-  let swaggerConfig: WorkProps[] = []
-  if (props.url) {
-    if (!serviceName) {
-      return console.info(log.error(`当前版本必须配置serviceName`));
-    }
-    swaggerConfig.push({
-      url,
-      path,
-      serviceName, 
-      modules: modules?.split(',') || []
-    })
-  } else if (config.swagger) {
-    if (Array.isArray(config.swagger)) {
-      swaggerConfig = config.swagger
-    } else {
-      swaggerConfig = [config.swagger]
-    }
-  }
+  const path_ = dir || config?.swagger.dir || "src/actions";
+  let swaggerConfig = config?.swagger?.services
 
   for (let i =0; i< swaggerConfig.length; i++) {
     const item = swaggerConfig[i]
@@ -59,9 +39,9 @@ type WorkProps = {
 async function unitWork({
   url,
   actionConfig,
-path,
-serviceName,
-modules
+  path,
+  serviceName,
+  modules
 }: WorkProps) {
   if (!url) {
     log.error("can not get swagger url");
@@ -71,7 +51,6 @@ modules
   console.info(log.tips(`开始获取 【${serviceName}】 swagger数据`));
 
   const swaggerData: any = await fetchData(url);
-  console.info(swaggerData, '~~~~~~~~~~~~~~~~~~~~~~~~~~')
   const swaggerVersion = swaggerData["swagger"] || swaggerData["openapi"];
   const publicTypes =
     swaggerData["definitions"] || swaggerData["components"]["schemas"];
@@ -85,9 +64,21 @@ modules
 + 🚴‍♀️ 接口模块数: ${swaggerData["tags"].length}                      
 + 🚗 接口数: ${Object.keys(swaggerData["paths"]).length}           
 + 🚄 公共类型数: ${Object.keys(publicTypes).length}  
-+ 🐘 执行模块: ${modules ? modules.join(`, `) : "所有模块"}          
++ 🐘 执行模块: ${modules && modules.length ? modulesShow(modules) : "所有模块"}          
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 `)
   );
   await transform(swaggerData, path, modules, serviceName, actionConfig);
+}
+
+function modulesShow(names) {
+  let res = ''
+  for (let i = 0; i < names.length; i++) {
+    res += names[i] + `, `
+    if (i % 3 === 0) {
+      res += `\n  `
+    }
+  }
+
+  return res
 }

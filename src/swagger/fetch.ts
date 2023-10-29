@@ -1,6 +1,7 @@
 import YAML from "js-yaml";
 import fetch from "node-fetch";
 import * as JSON_ from 'jsonc-parser'
+import log from "../log";
 
 export function fetchData(url: string) {
   return new Promise((resolve) => {
@@ -10,6 +11,9 @@ export function fetchData(url: string) {
         contents = contents.replace(/\:\/\//g, '')
         const res = parseFileContents(contents, url);
         resolve(res);
+      }).catch((err) => {
+        console.info(`${url}swaggerJSON请求报错:`)
+        console.info(log.error(err))
       });
   });
 }

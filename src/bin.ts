@@ -11,36 +11,34 @@ const program = new Command();
 program
   .command("watch")
   .description(
-    "in watch mode, build api-ui from request types and run mock server"
+    "监听请求类型文件，生成文档服务、mock服务、请求方法"
   )
-  .option("-p, --path <path>", "request types path")
-  .option("-s, --server <server>", "if start api-ui server")
-  .option("-m, --mock <mock>", "if start mock server")
-  .option("-a, --action <action>", "if create requst actions")
+  .option("-p, --path <path>", "请求类型TS文件的")
+  .option("-s, --server <server>", "是否启动文档服务")
+  .option("-m, --mock <mock>", "是否启动mock服务")
+  .option("-a, --action <action>", "是否生成请求方法")
   .action(watch);
 
 program
   .command("build")
-  .description("in production mode, build api-ui from request types")
-  .option("-p, --path <path>", "request types path")
+  .description("打包在线文档")
+  .option("-p, --path <path>", "请求类型文件所在路径")
   .action(build);
 
 program
   .command("file")
-  .description("glob request types")
-  .option("-p, --path <path>", "request types path")
-  .option("-w, --watch <watch>", "watch files change")
-  .option("-a, --action <action>", "create resquest method file")
+  .description("寻找所有的ts请求文件，生成请求方法")
+  .option("-p, --path <path>", "请求类型文件所在路径")
+  .option("-w, --watch <watch>", "是否监听文件变化")
+  .option("-a, --action <action>", "是否生成请求方法")
   .action(file);
 
 program
   .command("swagger")
-  .description("create request types and actions from  swagger data")
-  .option("-p, --path <path>", "request types path")
-  .option("-u, --url <url>", "the url of swagger data")
-  .option("-mod, --modules <modules>", "swagger tag item split with comma")
-  .option("-a, --action <action>", "if create request method")
-  .option("-ser, --service-name <serviceName>", "swagger service name")
+  .description("根据swagger去生成请求类型和请求方法、聚合swagger服务并提供搜索功能")
+  .option("-p, --dir <dir>", "所有ts类型和请求方法所在的最外层文件夹")
+  .option("-ser, --service-name <serviceName>", "选择需要转换的swagger服务名称")
+  .option("-d, --docs <docs>", "聚合多个swagger服务，并添加搜索功能")
   .action(swagger);
 
 program.parse(process.argv);

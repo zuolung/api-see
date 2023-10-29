@@ -1,9 +1,7 @@
 import pat from "path";
 import fs from "fs";
 import prettier from "prettier";
-// @ts-ignore
 import * as ora from "ora";
-// @ts-ignore
 import { pinyin } from "pinyin-pro";
 import log from "../log";
 import { getPrettierConfig } from "../config/getPrettierConfig";
@@ -11,9 +9,12 @@ import { createTypeFileName } from "./createTypeFileName";
 import { versionCompatible } from "./versionCompatible";
 import { Iconfig } from "global";
 import { createDefaultModel } from "../create-action/create";
-
-let prettierConfig = {};
-
+/**
+ * 过滤符合restful标准的参数类型
+ * @param parameters 请求字段描述
+ * @param method 请求方法
+ * @returns 
+ */
 function restfullApiParamsFilter(parameters, method) {
   const parametersNew = []
   let filterMap = {
@@ -32,7 +33,50 @@ function restfullApiParamsFilter(parameters, method) {
 
   return parametersNew
 }
+/**
+ * 创建swagger基础类型ts
+ * @param param0 基础类型描述、生成基础类型文件的路径
+ */
+function createSwaggerBaseType({
+  definitions,
+  BaseTypesUrl
+}) {
+  const allFormatDefKeys = Object.keys(definitions).map(k => formatBaseTypeKey(k))
+  let baseTypes = `  /* eslint-disable camelcase */
+  `;
 
+  for (const key in definitions) {
+    const def = definitions[key]
+
+    const parseResult = parseDef(def)
+    const commentsParams: any = {}
+    if (def.description) {
+      commentsParams['description'] = def.description || def
+    } else if (!key.includes('[') && !key.includes('【')){
+      commentsParams['description'] = key
+    }
+    const baseKey = formatBaseTypeKey(key)
+
+    const comments = createComments(commentsParams)
+    // 替换基类中没有的引用
+    parseResult.dependencies?.forEach(d => {
+      if (!allFormatDefKeys.includes(d)) {
+        parseResult.codes = parseResult.codes.replace(d, 'any')
+      }
+    })
+    baseTypes += `${comments}export type ${baseKey} = ${parseResult.codes}`
+  }
+
+  fs.writeFileSync(BaseTypesUrl, formatTs(baseTypes));
+}
+/**
+ * 
+ * @param data swagger数据
+ * @param path 所有
+ * @param modules 
+ * @param serviceName 
+ * @param actionConfig 
+ */
 export async function transform(
   data: Record<string, any>,
   path: string,
@@ -40,21 +84,12 @@ export async function transform(
   serviceName?: string,
   actionConfig?: Iconfig["action"]
 ) {
+  // 最外层文件路径
   const outDir = pat.resolve(process.cwd(), path);
-  // 请求swagger服务路径
+  // 请求swagger服务对应文件路径
   const swaggersDir = pat.resolve(process.cwd(), path, serviceName);
-  // 请求ts类型所在路径
+  // 请求ts类型对应文件所在路径
   const typesUrl = pat.resolve(process.cwd(), path, serviceName, "./types");
-  const BaseTypesUrl = pat.resolve(typesUrl, "./swagger-base.ts");
-  const result: any = {};
-  const { definitions } = versionCompatible({
-    data: data,
-  });
-  const paths = data["paths"];
-
-  let baseTypes = `  /* eslint-disable camelcase */
-  `;
-  prettierConfig = await getPrettierConfig();
   if (!fs.existsSync(outDir)) {
     fs.mkdirSync(outDir);
   }
@@ -64,7 +99,17 @@ export async function transform(
   if (!fs.existsSync(typesUrl)) {
     fs.mkdirSync(typesUrl);
   }
-
+  // 使用到的接口的描述集合
+  const result: any = {};
+  const { definitions } = versionCompatible({
+    data: data,
+  });
+  const BaseTypesUrl = pat.resolve(typesUrl, "./swagger-base.ts");
+  createSwaggerBaseType({
+    BaseTypesUrl,
+    definitions
+  })
+  const paths = data["paths"];
   const spinner = ora.default();
 
   console.info(log.tips("swagger数据解析中..."));
@@ -85,7 +130,7 @@ export async function transform(
         result[moduleName].firstUrl = key;
         result[moduleName].action = {}; // 模块相关请求
       }
-
+      // 请求数据拼装
       let reqCodes = "";
 
       let parameters: Record<string, any> = versionCompatible({
@@ -93,8 +138,8 @@ export async function transform(
         data: data,
       }).pathsRequestParams;
 
+      // restfulApi请求参数规则
       parameters = restfullApiParamsFilter(parameters, method)
-
 
       for (const km in parameters) {
         let it = parameters[km]
@@ -121,6 +166,7 @@ export async function transform(
 
       if (!reqCodes) reqCodes = "undefined \n";
 
+      // 响应数据拼装
       let resCodes = ``;
       const responseItem = versionCompatible({
         responseData: item,
@@ -149,7 +195,7 @@ export async function transform(
       result[moduleName].codes += `
     /**
      * ${item.summary || "--"}
-     * @url ${key}·
+     * @url ${key}
      * @method ${method}
      * @introduce ${item.description || "--"}
      */
@@ -171,7 +217,10 @@ export async function transform(
         }
       }
 
-      // @ts-ignore
+      const queryMatch = key.match(/\{[a-z\-A-Z]+\}/)
+      let queryKey = queryMatch ? queryMatch[0] : ''
+
+      // 请求方法生成需要数据
       result[moduleName].action[typeName] = {
         url: key,
         serviceName: serviceName,
@@ -179,6 +228,8 @@ export async function transform(
         introduce: item.description?.replace(/\*/g, ''),
         method,
         hasResponseData,
+        hasRequestQuery: !!queryKey,
+        queryKey,
       };
     }
   }
@@ -225,31 +276,6 @@ export async function transform(
     );
   }
 
-  const allFormatDefKeys = Object.keys(definitions).map(k => formatBaseTypeKey(k))
-
-  for (const key in definitions) {
-    const def = definitions[key]
-
-    const parseResult = parseDef(def)
-    const commentsParams: any = {}
-    if (def.description) {
-      commentsParams['description'] = def.description
-    } else {
-      commentsParams['description'] = key
-    }
-    const baseKey = formatBaseTypeKey(key)
-
-    const comments = createComments(commentsParams)
-    // 替换基类中没有的引用
-    parseResult.dependencies?.forEach(d => {
-      if (!allFormatDefKeys.includes(d)) {
-        parseResult.codes = parseResult.codes.replace(d, 'any')
-      }
-    })
-    baseTypes += `${comments}export type ${baseKey} = ${parseResult.codes}`
-  }
-
-  await fs.writeFileSync(BaseTypesUrl, formatTs(baseTypes));
 
   console.info(
     log.success(`
@@ -259,18 +285,36 @@ export async function transform(
 
   spinner.stop();
 }
-
+/**
+ * 
+ * @param key 
+ * @param required 
+ * @param requireArr 
+ * @returns 
+ */
 function ifNotRequired(key, required, requireArr) {
   if (required === false) return true;
   if (requireArr && requireArr.length && !requireArr.includes(key)) return true;
 
   return false;
 }
-
+/**
+ * 
+ * @param def 字段描述的数据
+ * @param kk 字段的key
+ * @returns 
+ */
 function parseDef(def: Record<string, any>, kk?: string) {
   const dependencies: any[] = [];
   const result = workUnit(def, kk);
-
+  /**
+   * 
+   * @param data 字段描述数据
+   * @param key  字段名称
+   * @param noMark 后续是否不需要换行
+   * @param requiredArr 必填字段有哪些
+   * @returns string
+   */
   function workUnit(
     data,
     key?: string,
@@ -428,7 +472,8 @@ function parseDef(def: Record<string, any>, kk?: string) {
         noMark ? "" : " \n "
       }`;
     } else if (data.schema) {
-      return workUnit(data.schema, key, true);
+      // v3版本兼容
+      return workUnit(data.schema, key);
     }
 
     return res;
@@ -443,15 +488,24 @@ function parseDef(def: Record<string, any>, kk?: string) {
 function isBaseType(d?: string) {
   return !["object", "array"].includes(d || "");
 }
-
+/**
+ * 映射新的基础类型名称
+ * @param type 
+ * @returns 
+ */
 function resetTypeName(type) {
   if (type === "file") return "string";
   if (type === "integer") return "number";
   if (type === "ref") return "string";
   return type;
 }
-
+/**
+ * 代码格式化
+ * @param str ts代码
+ * @returns 
+ */
 function formatTs(str) {
+  const prettierConfig = getPrettierConfig()
   // 空对象处理
   str = str?.replace(/\{\}/g, "Record<string, any>");
 
@@ -486,7 +540,11 @@ function getRequestTypeName(url) {
 export function wordFirstBig(str: string) {
   return str.substring(0, 1).toLocaleUpperCase() + str.substring(1);
 }
-
+/**
+ * 格式化引用字段名称和基础类型字段名称
+ * @param key 
+ * @returns 
+ */
 function formatBaseTypeKey(key) {
   let res = key;
   res = res
@@ -508,7 +566,11 @@ function formatBaseTypeKey(key) {
 
   return wordFirstBig(res);
 }
-
+/**
+ * 创建注释
+ * @param params 
+ * @returns 
+ */
 function createComments(params?: Record<string, any>) {
   let res = "";
   if (params && Object.keys(params).length > 0) {

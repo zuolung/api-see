@@ -1,6 +1,6 @@
 {
   "name": "api-see",
-  "version": "3.0.11",
+  "version": "3.0.12",
   "description": "",
   "main": "./ui/lib.js",
   "typings": "global.d.ts",
@@ -30,7 +30,8 @@
     "_real": "npx tsc -p tsconfig.json && yarn babel",
     "watch": "npx tsc -p tsconfig.json -w",
     "babel": "npx babel ui/api-ui.js --out-file ui/lib.js",
-    "release": "npx release-it"
+    "release": "npx release-it",
+    "gh": "npx antm-doc-build & npx gh-pages -d doc_build"
   },
   "author": "zuolong",
   "license": "MIT",
@@ -70,9 +71,13 @@
     "webpack-dev-server": "^4.9.3"
   },
   "devDependencies": {
+    "@antmjs/doc": "^2.3.23",
+    "@antmjs/types": "^2.3.23",
     "@types/mockjs": "^1.0.6",
     "react": "^17.0.2",
-    "react-dom": "^17.0.2"
+    "react-dom": "^17.0.2",
+    "style-resources-loader": "^1.5.0",
+    "swc-loader": "^0.2.3"
   },
   "peerDependencies": {
     "react": ">=17.0.2",
