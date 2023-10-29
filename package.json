@@ -1,6 +1,6 @@
 {
   "name": "api-see",
-  "version": "3.0.12",
+  "version": "3.0.13",
   "description": "",
   "main": "./ui/lib.js",
   "typings": "global.d.ts",
