@@ -38,6 +38,5 @@
     // }
   },
   "include": ["*.ts", "*.d.ts"],
-  "exclude": ["./tsconfig.json"],
   "compileOnSave": false
 }

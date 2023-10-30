@@ -41,6 +41,6 @@
     // }
   },
   "include": ["src/**/*", "types", "./global.d.ts", "*.ts"],
-  "exclude": ["./tsconfig.json", "antm.config.ts"],
+  "exclude": ["antm.config.ts"],
   "compileOnSave": false
 }
