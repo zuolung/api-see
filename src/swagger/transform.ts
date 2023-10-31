@@ -69,6 +69,8 @@ function createSwaggerBaseType({
 
   fs.writeFileSync(BaseTypesUrl, formatTs(baseTypes));
 }
+
+let prettierConfig = {}
 /**
  * 
  * @param data swagger数据
@@ -84,6 +86,7 @@ export async function transform(
   serviceName?: string,
   actionConfig?: Iconfig["action"]
 ) {
+  prettierConfig = await getPrettierConfig()
   // 最外层文件路径
   const outDir = pat.resolve(process.cwd(), path);
   // 请求swagger服务对应文件路径
@@ -505,7 +508,6 @@ function resetTypeName(type) {
  * @returns 
  */
 function formatTs(str) {
-  const prettierConfig = getPrettierConfig()
   // 空对象处理
   str = str?.replace(/\{\}/g, "Record<string, any>");
 
