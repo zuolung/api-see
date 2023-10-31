@@ -43,6 +43,27 @@ src
 |   └── types
 ```
 
+### 请求类型标准
+
+- 请求字段的名称由url驼峰拼接而成
+- `query`格式的请求在请求方法拼接的配置函数中有`requestNull`标识
+- `swagger-base`文件为公共基础类型， 基类名称来至swaggerJSON中`defination`的`key`,中文会转拼音，会出现长度比较长的情况
+
+```ts
+import { BizResult_int } from './swagger-base'
+/**
+ * deviceGroupFixIsCoreData
+ * @url /device/group/deviceGroupFixIsCoreData/{groupId}
+ * @method post
+ * @introduce --
+ */
+export type DeviceGroupDeviceGroupFixIsCoreDataGroupId = {
+  request: undefined
+
+  response: BizResult_int
+}
+```
+
 ### restfullAPI标准
 
 针对请求参数的处理
@@ -56,4 +77,18 @@ src
 
 - `DELETE`方法：DELETE方法通常不需要传递参数，因为它主要用于删除指定的资源。如果要传递参数，可以将其放在URL的查询参数中，但这不是常见的做法。在DELETE请求中，路径通常指定要删除的资源的唯一标识符。
 
-不符合上述规则的请求参数将被省略
+不符合上述规则的请求参数将被省略，其他请求方法默认从`body`里面取
+
+> 一个url对应多个请求的时候，只会解析第一个请求
+
+### 生成代码的格式化
+
+项目根目录配置`.prettierrc`文件， 默认的配置如下
+
+```ts
+{
+  semi: false
+  singleQuote: true
+  trailingComma: 'all'
+}
+```

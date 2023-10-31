@@ -64,6 +64,8 @@ export type Iconfig = {
           introduce: string;
           /** 服务名称 */
           serviceName?: string;
+          /** 请求参数是否是空的 */
+          requestNull?: boolean;
           /** 响应体是否有data字段 */
           hasResponseData?: boolean;
           /** 请求方式是否有query */

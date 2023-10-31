@@ -16,6 +16,11 @@
 - data对象的key是请求路径拼接的
 - data[key].hasRequestQuery判断当前url中是否存在query
 - data[key].hasResponseData判断当前请求是否存在`data`字段
+- data[key].requestNull请求字段是否可为空
+- data[key].url 请求的路径
+- data[key].description 请求的描述
+- data[key].method 请求方法
+- data[key].serviceName 请求的服务名称， 可以拼接到url之前, 通过ts类型代码注释或者swagger配置里面得到
 
 ```ts
 import type { Iconfig } from 'api-see'

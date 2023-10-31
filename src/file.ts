@@ -107,10 +107,16 @@ function workUnit(paths: string[], action: boolean) {
             const urlData = {}
             Object.keys(def).map(url => {
               let hasResponseData = false
+              let requestNull = false
               const item: any = def[url]
               const responseData = def[url]['properties']['response']
+              const requestData = def[url]['properties']['request']
               if (responseData?.type === "object" && responseData?.properties?.data) {
                 hasResponseData = true;
+              }
+
+              if ((requestData?.type === "object" && requestData?.properties?.data) || !requestData) {
+                requestNull = true;
               }
 
               const queryMatch = url.match(/\{[a-z\-A-Z]+\}/)
@@ -125,6 +131,7 @@ function workUnit(paths: string[], action: boolean) {
                 hasResponseData,
                 hasRequestQuery: !!queryKey,
                 queryKey,
+                requestNull,
               }
             })
             const content = createAction({

@@ -232,6 +232,7 @@ export async function transform(
         method,
         hasResponseData,
         hasRequestQuery: !!queryKey,
+        requestNull: reqCodes === 'undefined \n',
         queryKey,
       };
     }
@@ -249,10 +250,7 @@ export async function transform(
     let content = "";
 
     const c = {
-      requestFnName: actionConfig?.requestFnName,
       fileName: createTypeFileName?.(nn),
-      requestSuffix: actionConfig?.requestSuffix,
-      requestImport: actionConfig?.requestImport,
       data: result[nn].action,
     };
 

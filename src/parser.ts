@@ -17,6 +17,7 @@ export default function tsTypeParse(file: string) {
       "method",
       "introduce",
       "timeout",
+      "serviceName",
     ],
     excludePrivate: true,
     ignoreErrors: true,
