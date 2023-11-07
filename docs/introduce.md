@@ -55,9 +55,19 @@ yarn add api-see
 ```json
 {
   "scripts": {
-    "swagger": "api-see swagger --dir ./src/actions",
+    "swagger": "api-see swagger --dir ./src/api",
     "swagger:xxx": "api-see swagger --service-name xxx"
   }
 }
 ```
+
+### 推荐的文件目录结构
+
+生成文件的目录结构如下
+
+```markdown
+src
+├── api
+| |── actions
+| └── types
 

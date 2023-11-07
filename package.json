@@ -31,7 +31,8 @@
     "watch": "npx tsc -p tsconfig.json -w",
     "babel": "npx babel ui/api-ui.js --out-file ui/lib.js",
     "release": "npx release-it",
-    "gh": "npx antm-doc-build & npx gh-pages -d doc_build"
+    "gh": "npx antm-doc-build & npx gh-pages -d doc_build",
+    "docs": "npx antm-doc-start"
   },
   "author": "zuolong",
   "license": "MIT",

@@ -2,13 +2,16 @@
 
 ### 介绍
 
-根据swagger的json可以生成ts类型代码和请求代码
+根据swagger的json可以生成ts类型代码和请求代码, service-name,只转换配置项里面的某个swagger服务
 
 ```bash
 api-see swagger
+api-see swagger --service-name xx
 ```
 
 ### 配置
+- dir: 请求ts类型和请求方法最外层的文件路径
+- service： 请求swagger服务名称、swaggerJSON路径url、modules需要的模块，不传则转换所有
 
 ```ts
 import type { Iconfig } from 'api-see'
@@ -20,6 +23,7 @@ const config: Iconfig = {
       {
         serviceName: 'aa',
         url: 'http://xxxxxxx',
+        modules: ['xxxx'],
       },
       {
         serviceName: 'bb',
@@ -42,6 +46,8 @@ src
 |   |── actions
 |   └── types
 ```
+
+> actions为请求方法，type为请求类型
 
 ### 请求类型标准
 
@@ -79,7 +85,14 @@ export type DeviceGroupDeviceGroupFixIsCoreDataGroupId = {
 
 不符合上述规则的请求参数将被省略，其他请求方法默认从`body`里面取
 
-> 一个url对应多个请求的时候，只会解析第一个请求
+- 一个url对应多个请求的时候，只会解析第一个请求，如果有url对应多个请求,生成的请求方法达不到预期,请自行创建特殊请求和请求方法的映射关系如下，在[action.createDefaultModel](/#/create-action)组装请求方法的时候过滤下
+
+```ts
+// 如遇到 'a/b/c'这个请求有多种请求方法，可以在createDefaultModel中过滤出来，选择生成多个，或者生成需要的方法的请求
+const specialUrl = {
+  'a/b/c': 'post'
+}
+```
 
 ### 生成代码的格式化
 

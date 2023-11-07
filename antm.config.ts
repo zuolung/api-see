@@ -5,6 +5,7 @@ export default defineConfig({
   docs: {
     title: 'Api-see',
     src: join(process.cwd(), './docs'),
+    globalStyles: [join(process.cwd(), './docs.less')],
     menu: [
       {
         name: '指南',

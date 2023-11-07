@@ -34,6 +34,11 @@ export default {
 <li>data对象的key是请求路径拼接的</li>
 <li>data[key].hasRequestQuery判断当前url中是否存在query</li>
 <li>data[key].hasResponseData判断当前请求是否存在<code>data</code>字段</li>
+<li>data[key].requestNull请求字段是否可为空</li>
+<li>data[key].url 请求的路径</li>
+<li>data[key].description 请求的描述</li>
+<li>data[key].method 请求方法</li>
+<li>data[key].serviceName 请求的服务名称， 可以拼接到url之前, 通过ts类型代码注释或者swagger配置里面得到</li>
 </ul>
 <div class="code-box-max">
 <div class="copy-code-btn"></div>
