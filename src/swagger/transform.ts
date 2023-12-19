@@ -82,7 +82,7 @@ function createSwaggerBaseType(definitions, deps, codes) {
     usedDefsKey.push(key)
     codesCache.push(codes)
 
-    codes = codes.replace(key, parseResult.codes).replace(/\n\[\]/, '') + suffixCode
+    codes = codes.replace(key, parseResult.codes).replace(/\n\[\]/, '[]') + suffixCode
 
     parseResult.dependencies?.forEach(item => {
       workNextUsed(item)
