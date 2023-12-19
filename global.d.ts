@@ -84,8 +84,6 @@ export type Iconfig = {
     services: {
       /** swagger JSON 路径 */
       url: string;
-      /** 使用到的模块 */
-      modules?: string[];
       /** 服务名称，可以拼接到请求路径前 */
       serviceName: string;
     }[];

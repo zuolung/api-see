@@ -5,8 +5,7 @@
 根据swagger的json可以生成ts类型代码和请求代码, service-name,只转换配置项里面的某个swagger服务
 
 ```bash
-api-see swagger
-api-see swagger --service-name xx
+api-see swagger --dir src/pages/aa/api
 ```
 
 ### 配置
@@ -23,7 +22,6 @@ const config: Iconfig = {
       {
         serviceName: 'aa',
         url: 'http://xxxxxxx',
-        modules: ['xxxx'],
       },
       {
         serviceName: 'bb',
@@ -33,30 +31,36 @@ const config: Iconfig = {
   }
 }
 ```
+在目标路径`src/pages/aa/api`下配置`swagger.json`文件, `服务名称: urlString[]`
 
-生成文件的目录结构如下
+```json
+{
+  "aa": [
+    "/shop/device/lost/v2/confirm",
+  ],
+}
+```
+
+然后执行命令`api-see swagger --dir src/pages/aa/api`生成文件的目录结构如下
 
 ```markdown
 src
-├── api
+├── pages
 │ |── aa
-| | |── actions
-| | └── types
-| └── bb
-|   |── actions
-|   └── types
+   |── api
+     |── swagger.json
+     |── aa-action.ts
+     └── aa-types.ts
 ```
 
-> actions为请求方法，type为请求类型
+> action为请求方法，types为请求类型
 
 ### 请求类型标准
 
 - 请求字段的名称由url驼峰拼接而成
 - `query`格式的请求在请求方法拼接的配置函数中有`requestNull`标识
-- `swagger-base`文件为公共基础类型， 基类名称来至swaggerJSON中`defination`的`key`,中文会转拼音，会出现长度比较长的情况
 
 ```ts
-import { BizResult_int } from './swagger-base'
 /**
  * deviceGroupFixIsCoreData
  * @url /device/group/deviceGroupFixIsCoreData/{groupId}
@@ -66,7 +70,7 @@ import { BizResult_int } from './swagger-base'
 export type DeviceGroupDeviceGroupFixIsCoreDataGroupId = {
   request: undefined
 
-  response: BizResult_int
+  response: {.....}
 }
 ```
 

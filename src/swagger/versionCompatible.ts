@@ -1,7 +1,9 @@
+import { formatBaseTypeKey } from "./transform"
+
 function versionCompatible(dna: any) {
   const { data, requestParams, responseData } = dna
   const swaggerVersion = data['swagger'] || data['openapi']
-  let definitions = []
+  let definitions = {}
   let pathsRequestParams = undefined
   let pathsResponseData = undefined
 
@@ -31,8 +33,14 @@ function versionCompatible(dna: any) {
     }
   }
 
+  // 格式化 definitions的key
+  const newDefinitions = {}
+  for (const k in definitions) {
+    newDefinitions[formatBaseTypeKey(k)] = definitions[k]
+  }
+
   return {
-    definitions,
+    definitions: newDefinitions,
     pathsRequestParams,
     pathsResponseData,
   }

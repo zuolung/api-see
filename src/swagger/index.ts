@@ -3,26 +3,46 @@ import log from "../log.js";
 import { transform } from "./transform.js";
 import { fetchData } from "./fetch.js";
 import { Iconfig } from "global.js";
+import { join } from 'path'
+import { existsSync } from 'fs'
 
 type Iprops = {
   dir?: string;
 };
 
 export default async function swagger(props: Iprops) {
-  const { dir } = props;
+  let { dir } = props;
+  if (!dir) {
+    console.info(log.error(`缺少dir选项`))
+    process.exit(1)
+  }
+  dir = dir.startsWith('/') ? dir : join(process.cwd(), dir)
+  if (!existsSync(dir)) {
+    console.info(`${dir}路径不存在`)
+    process.exit(1)
+  }
   const config = getConfig();
-  const path_ = dir || config?.swagger.dir || "src/actions";
+  // 业务模块中用到的xx服务下的xxx接口
+  const apiUrlsPath = join(dir, './swagger.json')
+  if (!existsSync(apiUrlsPath)) {
+    console.info(log.error(`缺少文件${apiUrlsPath}`))
+    process.exit(1)
+  }
+  const apiUrls = require(apiUrlsPath) || {}
   let swaggerConfig = config?.swagger?.services
 
   for (let i =0; i< swaggerConfig.length; i++) {
     const item = swaggerConfig[i]
-    await unitWork({
-      url: item.url,
-      modules: item.modules,
-      serviceName: item.serviceName,
-      path: path_,
-      actionConfig: config.action
-    })
+    const currentUrls = apiUrls[item.serviceName] || []
+    if (currentUrls.length) {
+      await unitWork({
+        url: item.url,
+        serviceName: item.serviceName,
+        path: dir,
+        actionConfig: config.action,
+        apiUrls: apiUrls[item.serviceName] || [],
+      })
+    }
   }
 
   if (swaggerConfig.length > 1) console.info(log.success(`所有服务解析完成`));
@@ -30,10 +50,10 @@ export default async function swagger(props: Iprops) {
 
 type WorkProps = {
   url?: string
-  modules?: string[]
   serviceName?: string
   path?: string
   actionConfig?: Iconfig['action']
+  apiUrls: string[]
 }
 
 async function unitWork({
@@ -41,7 +61,7 @@ async function unitWork({
   actionConfig,
   path,
   serviceName,
-  modules
+  apiUrls,
 }: WorkProps) {
   if (!url) {
     log.error("can not get swagger url");
@@ -52,33 +72,31 @@ async function unitWork({
 
   const swaggerData: any = await fetchData(url);
   const swaggerVersion = swaggerData["swagger"] || swaggerData["openapi"];
-  const publicTypes =
-    swaggerData["definitions"] || swaggerData["components"]["schemas"];
 
   console.info(
     log.success(`
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-+ ${serviceName} swagger data                                                    +
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-+ 🚀 swagger版本: ${swaggerVersion}                        
-+ 🚴‍♀️ 接口模块数: ${swaggerData["tags"].length}                      
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++ ${serviceName} swagger data                             
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++ 🔌 请求JSON路径: ${url}
++ 🚀 swagger版本: ${swaggerVersion}                                             
 + 🚗 接口数: ${Object.keys(swaggerData["paths"]).length}           
-+ 🚄 公共类型数: ${Object.keys(publicTypes).length}  
-+ 🐘 执行模块: ${modules && modules.length ? modulesShow(modules) : "所有模块"}          
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++ 🐎 转换的接口数量：${apiUrls.length}
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 `)
   );
-  await transform(swaggerData, path, modules, serviceName, actionConfig);
-}
+  await transform(swaggerData, path, apiUrls, serviceName, actionConfig);
+  const allUrls = Object.keys(swaggerData.paths)
+  let unFindUrl = apiUrls.filter((it) => {
+    return !allUrls.includes(it)
+  })
 
-function modulesShow(names) {
-  let res = ''
-  for (let i = 0; i < names.length; i++) {
-    res += names[i] + `, `
-    if (i % 3 === 0) {
-      res += `\n  `
-    }
+  if (unFindUrl && unFindUrl.length) {
+    console.info(log.warning(`有${unFindUrl.length}个接口未查询到:`))
+    unFindUrl.forEach(it => {
+      console.info(log.tips(`1.   ${it}`))
+    })
+    console.info(`
+    `)
   }
-
-  return res
 }
