@@ -195,10 +195,12 @@ export async function transform(
     }
     `;
 
-    const defKey = responseItem?.schema?.$ref
+    let defKey = responseItem?.schema?.$ref
       ?.replace("#/components/schemas/", "")
       ?.replace("#/definitions/", "");
     let hasResponseData = false;
+    defKey = formatBaseTypeKey(defKey)
+
     if (defKey) {
       const responseData = definitions[defKey];
       if (responseData?.type === "object" && responseData?.properties?.data) {
@@ -221,6 +223,7 @@ export async function transform(
       requestNull: reqCodes === "undefined \n",
       queryKey,
     };
+
   }
 
   const tsTypesFile = pat.join(path, `./${serviceName}-types.ts`)
